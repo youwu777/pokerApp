@@ -11,14 +11,14 @@ const DISCONNECT_RETENTION_MS = 5 * 60 * 1000; // Keep state for 5 minutes
 
 export function setupSocketHandlers(io, socket) {
 
-    const scoreboardKey = (player) => player?.sessionToken || player?.socketId;
+    const scoreboardKey = (player) => player?.playerId || player?.sessionToken || player?.socketId;
 
     const migrateScoreboardKey = (room, oldKey, newKey) => {
         if (!oldKey || !newKey || oldKey === newKey) return;
         if (!room.scoreboard.has(oldKey)) return;
         const entry = room.scoreboard.get(oldKey);
         room.scoreboard.delete(oldKey);
-        room.scoreboard.set(newKey, { ...entry, sessionToken: newKey });
+        room.scoreboard.set(newKey, { ...entry, playerId: newKey });
     };
 
     const upsertScoreboard = (room, player, isActive = true) => {
@@ -26,7 +26,8 @@ export function setupSocketHandlers(io, socket) {
         if (!key) return;
         const existing = room.scoreboard.get(key) || {};
         room.scoreboard.set(key, {
-            sessionToken: key,
+            playerId: key,
+            sessionToken: player.sessionToken,
             socketId: player.socketId,
             nickname: player.nickname,
             buyin: player.buyin,
@@ -67,8 +68,9 @@ export function setupSocketHandlers(io, socket) {
                     }
                 }
 
-                // Migrate old scoreboard key (from old socketId) to sessionToken if needed
-                migrateScoreboardKey(room, previousSocketId, stableToken);
+                // Migrate old scoreboard key (from old socketId/sessionToken) to playerId
+                migrateScoreboardKey(room, previousSocketId, player.playerId);
+                migrateScoreboardKey(room, stableToken, player.playerId);
 
                 // Rebind to new socket
                 player.socketId = socket.id;
@@ -81,7 +83,7 @@ export function setupSocketHandlers(io, socket) {
                 }
 
                 // If this session is the host, rebind host socket
-                if (room.isHostSession(player.sessionToken)) {
+                if (room.isHostSession(player.sessionToken) || room.isHostPlayer(player.playerId)) {
                     room.hostSocketId = socket.id;
                 }
 
@@ -307,16 +309,18 @@ export function setupSocketHandlers(io, socket) {
                             console.log(`[AUTO-STANDUP] ${player.nickname} forced to stand up (0 stack)`);
                             player.standUp();
                             // Update scoreboard with final stack (scoreboard is at Room level)
-                            if (currentRoom.scoreboard.has(player.socketId)) {
-                                const stats = currentRoom.scoreboard.get(player.socketId);
+                            const key = player.playerId || player.sessionToken || player.socketId;
+                            if (currentRoom.scoreboard.has(key)) {
+                                const stats = currentRoom.scoreboard.get(key);
                                 stats.stack = player.stack;
                             }
                         } else if (player.standUpNextHand) {
                             console.log(`[DEBUG] ${player.nickname} standing up before next hand`);
                             player.standUp();
                             // Update scoreboard with final stack (scoreboard is at Room level)
-                            if (currentRoom.scoreboard.has(player.socketId)) {
-                                const stats = currentRoom.scoreboard.get(player.socketId);
+                            const key = player.playerId || player.sessionToken || player.socketId;
+                            if (currentRoom.scoreboard.has(key)) {
+                                const stats = currentRoom.scoreboard.get(key);
                                 stats.stack = player.stack;
                             }
                         }
@@ -423,15 +427,17 @@ export function setupSocketHandlers(io, socket) {
                                         if (player.seatNumber !== null && player.stack === 0) {
                                             console.log(`[AUTO-STANDUP] ${player.nickname} forced to stand up (0 stack)`);
                                             player.standUp();
-                                            if (currentRoom.scoreboard.has(player.socketId)) {
-                                                const stats = currentRoom.scoreboard.get(player.socketId);
+                                            const key = player.playerId || player.sessionToken || player.socketId;
+                                            if (currentRoom.scoreboard.has(key)) {
+                                                const stats = currentRoom.scoreboard.get(key);
                                                 stats.stack = player.stack;
                                             }
                                         } else if (player.standUpNextHand) {
                                             console.log(`[DEBUG] ${player.nickname} standing up before next hand`);
                                             player.standUp();
-                                            if (currentRoom.scoreboard.has(player.socketId)) {
-                                                const stats = currentRoom.scoreboard.get(player.socketId);
+                                            const key = player.playerId || player.sessionToken || player.socketId;
+                                            if (currentRoom.scoreboard.has(key)) {
+                                                const stats = currentRoom.scoreboard.get(key);
                                                 stats.stack = player.stack;
                                             }
                                         }
@@ -523,8 +529,9 @@ export function setupSocketHandlers(io, socket) {
                     if (player.seatNumber !== null) {
                         player.stack = player.chips;
                         // Update scoreboard (scoreboard is at Room level)
-                        if (room.scoreboard.has(player.socketId)) {
-                            const stats = room.scoreboard.get(player.socketId);
+                        const key = player.playerId || player.sessionToken || player.socketId;
+                        if (room.scoreboard.has(key)) {
+                            const stats = room.scoreboard.get(key);
                             stats.stack = player.stack;
                         }
                     }
@@ -570,7 +577,7 @@ export function setupSocketHandlers(io, socket) {
         // Store pending buy-in request
         room.pendingBuyIns.set(requestId, {
             requestId,
-            playerId: socket.id,
+            playerId: player.playerId,
             nickname: player.nickname,
             amount: buyinAmount,
             timestamp: Date.now()
@@ -614,7 +621,7 @@ export function setupSocketHandlers(io, socket) {
             return;
         }
 
-        const player = room.getPlayer(request.playerId);
+        const player = room.getPlayerById(request.playerId);
         if (!player) {
             socket.emit('error', { message: 'Player not found' });
             room.pendingBuyIns.delete(requestId);
@@ -760,7 +767,7 @@ export function setupSocketHandlers(io, socket) {
             player.isConnected = false;
             player.disconnectedAt = Date.now();
             upsertScoreboard(room, player, false);
-            room.markPlayerInactiveInScoreboard(player.sessionToken || player.socketId, player);
+            room.markPlayerInactiveInScoreboard(player.playerId || player.sessionToken || player.socketId, player);
 
             io.to(room.id).emit('player-disconnected', {
                 playerId: player.sessionToken || player.socketId,
@@ -821,15 +828,17 @@ function startPlayerTimer(io, room) {
                             console.log(`[AUTO-STANDUP] ${player.nickname} forced to stand up (0 stack)`);
                             player.standUp();
                             // Update scoreboard with final stack (scoreboard is at Room level)
-                            if (currentRoom.scoreboard.has(player.socketId)) {
-                                const stats = currentRoom.scoreboard.get(player.socketId);
+                            const key = player.playerId || player.sessionToken || player.socketId;
+                            if (currentRoom.scoreboard.has(key)) {
+                                const stats = currentRoom.scoreboard.get(key);
                                 stats.stack = player.stack;
                             }
                         } else if (player.standUpNextHand) {
                             player.standUp();
                             // Update scoreboard with final stack (scoreboard is at Room level)
-                            if (currentRoom.scoreboard.has(player.socketId)) {
-                                const stats = currentRoom.scoreboard.get(player.socketId);
+                            const key = player.playerId || player.sessionToken || player.socketId;
+                            if (currentRoom.scoreboard.has(key)) {
+                                const stats = currentRoom.scoreboard.get(key);
                                 stats.stack = player.stack;
                             }
                         }
@@ -948,15 +957,17 @@ function startPlayerTimer(io, room) {
                             console.log(`[AUTO-STANDUP] ${player.nickname} forced to stand up (0 stack)`);
                             player.standUp();
                             // Update scoreboard with final stack (scoreboard is at Room level)
-                            if (currentRoom.scoreboard.has(player.socketId)) {
-                                const stats = currentRoom.scoreboard.get(player.socketId);
+                            const key = player.playerId || player.sessionToken || player.socketId;
+                            if (currentRoom.scoreboard.has(key)) {
+                                const stats = currentRoom.scoreboard.get(key);
                                 stats.stack = player.stack;
                             }
                         } else if (player.standUpNextHand) {
                             player.standUp();
                             // Update scoreboard with final stack (scoreboard is at Room level)
-                            if (currentRoom.scoreboard.has(player.socketId)) {
-                                const stats = currentRoom.scoreboard.get(player.socketId);
+                            const key = player.playerId || player.sessionToken || player.socketId;
+                            if (currentRoom.scoreboard.has(key)) {
+                                const stats = currentRoom.scoreboard.get(key);
                                 stats.stack = player.stack;
                             }
                         }

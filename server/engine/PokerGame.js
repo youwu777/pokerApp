@@ -112,7 +112,7 @@ export class PokerGame {
 
         // Process approved buy-ins before resetting players
         this.room.approvedBuyIns.forEach((amount, playerId) => {
-            const player = this.players.find(p => p.socketId === playerId);
+            const player = this.players.find(p => p.playerId === playerId);
             if (player) {
                 console.log(`[BUYIN] Adding $${amount} to ${player.nickname}'s stack (was ${player.stack}) and chips (was ${player.chips})`);
                 player.stack += amount;
@@ -130,7 +130,7 @@ export class PokerGame {
                 }
             } else {
                 // Player not in current hand (not seated), but still update their stack for when they sit
-                const allPlayer = this.room.getPlayer(playerId);
+                const allPlayer = this.room.getPlayerById ? this.room.getPlayerById(playerId) : this.room.getPlayer(playerId);
                 if (allPlayer) {
                     console.log(`[BUYIN] Adding $${amount} to ${allPlayer.nickname}'s stack (player not in current hand, was ${allPlayer.stack})`);
                     allPlayer.stack += amount;
@@ -163,19 +163,26 @@ export class PokerGame {
 
         // Add players to scoreboard if not already there (scoreboard is at Room level)
         this.players.forEach(player => {
-            if (!this.room.scoreboard.has(player.socketId)) {
-                this.room.scoreboard.set(player.socketId, {
+            const key = player.playerId || player.sessionToken || player.socketId;
+            if (!this.room.scoreboard.has(key)) {
+                this.room.scoreboard.set(key, {
+                    playerId: key,
+                    sessionToken: player.sessionToken,
                     socketId: player.socketId,
                     nickname: player.nickname,
                     buyin: player.buyin,
                     stack: player.stack,
-                    isActive: true
+                    isActive: true,
+                    isConnected: true
                 });
             } else {
                 // Update existing entry to mark as active
-                const stats = this.room.scoreboard.get(player.socketId);
+                const stats = this.room.scoreboard.get(key);
                 stats.isActive = true;
+                stats.isConnected = true;
                 stats.stack = player.stack; // Update stack from current player
+                stats.socketId = player.socketId;
+                stats.sessionToken = player.sessionToken;
             }
         });
 
@@ -542,8 +549,9 @@ export class PokerGame {
                 if (player.seatNumber !== null) {
                     player.stack = player.chips;
                     // Update scoreboard (at Room level)
-                    if (this.room.scoreboard.has(player.socketId)) {
-                        const stats = this.room.scoreboard.get(player.socketId);
+                    const key = player.playerId || player.sessionToken || player.socketId;
+                    if (this.room.scoreboard.has(key)) {
+                        const stats = this.room.scoreboard.get(key);
                         stats.stack = player.stack;
                     }
                     // Auto-stand-up players with 0 stack
@@ -787,8 +795,9 @@ export class PokerGame {
                 console.log(`[STACK] ${player.nickname}: chips=${player.chips}, updating stack from ${player.stack} to ${player.chips}, totalContribution=${player.totalContribution}`);
                 player.stack = player.chips;
                 // Update scoreboard (at Room level)
-                if (this.room.scoreboard.has(player.socketId)) {
-                    const stats = this.room.scoreboard.get(player.socketId);
+                const key = player.playerId || player.sessionToken || player.socketId;
+                if (this.room.scoreboard.has(key)) {
+                    const stats = this.room.scoreboard.get(key);
                     stats.stack = player.stack;
                 }
                 // Auto-stand-up players with 0 stack

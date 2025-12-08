@@ -1,6 +1,10 @@
+import { v4 as uuidv4 } from 'uuid';
+
 export class Player {
-    constructor(socketId, nickname, buyinAmount = 1000) {
+    constructor(socketId, nickname, buyinAmount = 1000, sessionToken = null, playerId = null) {
         this.socketId = socketId;
+        this.sessionToken = sessionToken; // Stable identity across reconnects
+        this.playerId = playerId || uuidv4(); // Stable UUID independent of socket/session
         this.nickname = nickname;
         this.buyin = buyinAmount; // Original buyin amount (never changes)
         this.stack = buyinAmount; // Persistent stack that stays with player in room
@@ -15,6 +19,8 @@ export class Player {
         this.lastAction = null; // fold, check, call, bet, raise, all-in
         this.position = null; // BTN, SB, BB, UTG, etc.
         this.standUpNextHand = false;
+        this.isConnected = true; // Connection status for reconnection handling
+        this.disconnectedAt = null;
     }
 
     sitDown(seatNumber, timeBank) {
@@ -76,6 +82,8 @@ export class Player {
     toJSON() {
         return {
             socketId: this.socketId,
+            sessionToken: this.sessionToken,
+            playerId: this.playerId,
             nickname: this.nickname,
             buyin: this.buyin,
             stack: this.stack,
@@ -87,6 +95,7 @@ export class Player {
             lastAction: this.lastAction,
             position: this.position,
             standUpNextHand: this.standUpNextHand,
+            isConnected: this.isConnected,
             // Don't include hole cards in public JSON
         };
     }
