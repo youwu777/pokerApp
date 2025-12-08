@@ -308,8 +308,7 @@ export class PokerGame {
                 return this.endHand();
         }
 
-        // Filter out all-in players - they're already committed and can't act
-        const playersCanAct = activePlayers.filter(p => p.status === 'active');
+        // playersCanAct already filtered above - only includes active (non-all-in) players
         
         // Start new betting round (only with players who can act)
         this.bettingRound = new BettingRound(
