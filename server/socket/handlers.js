@@ -4,13 +4,41 @@ import { PokerGame } from '../engine/PokerGame.js';
 import { RunItTwice } from '../engine/RunItTwice.js';
 import { RabbitHunt } from '../engine/RabbitHunt.js';
 import { PlayerTimer } from '../utils/Timer.js';
+import { v4 as uuidv4 } from 'uuid';
 
 const activeTimers = new Map(); // roomId -> timer
+const DISCONNECT_RETENTION_MS = 5 * 60 * 1000; // Keep state for 5 minutes
 
 export function setupSocketHandlers(io, socket) {
 
+    const scoreboardKey = (player) => player?.sessionToken || player?.socketId;
+
+    const migrateScoreboardKey = (room, oldKey, newKey) => {
+        if (!oldKey || !newKey || oldKey === newKey) return;
+        if (!room.scoreboard.has(oldKey)) return;
+        const entry = room.scoreboard.get(oldKey);
+        room.scoreboard.delete(oldKey);
+        room.scoreboard.set(newKey, { ...entry, sessionToken: newKey });
+    };
+
+    const upsertScoreboard = (room, player, isActive = true) => {
+        const key = scoreboardKey(player);
+        if (!key) return;
+        const existing = room.scoreboard.get(key) || {};
+        room.scoreboard.set(key, {
+            sessionToken: key,
+            socketId: player.socketId,
+            nickname: player.nickname,
+            buyin: player.buyin,
+            stack: player.stack,
+            isActive,
+            isConnected: player.isConnected !== false,
+            ...existing
+        });
+    };
+
     // Join room
-    socket.on('join-room', ({ roomId, nickname, buyinAmount }) => {
+    socket.on('join-room', ({ roomId, nickname, buyinAmount, sessionToken }) => {
         const room = roomManager.getRoom(roomId);
 
         if (!room) {
@@ -18,19 +46,87 @@ export function setupSocketHandlers(io, socket) {
             return;
         }
 
+        // Ensure we have a stable session token
+        let stableToken = sessionToken || uuidv4();
+
         try {
             const buyin = buyinAmount || 1000;
-            console.log(`[JOIN] ${nickname} joining with buyin: ${buyin} (type: ${typeof buyin})`);
-            const player = new Player(socket.id, nickname, buyin);
+            console.log(`[JOIN] ${nickname} joining with buyin: ${buyin} (type: ${typeof buyin}), token: ${stableToken}`);
+
+            // Check for existing session
+            let player = room.getPlayerBySession(stableToken);
+
+            if (player) {
+                const previousSocketId = player.socketId;
+                // Enforce single connection per sessionToken: disconnect old socket if different
+                if (player.socketId && player.socketId !== socket.id) {
+                    const oldSocket = io.sockets.sockets.get(player.socketId);
+                    if (oldSocket) {
+                        console.log(`[SESSION] Disconnecting old socket for token ${stableToken}`);
+                        oldSocket.disconnect(true);
+                    }
+                }
+
+                // Migrate old scoreboard key (from old socketId) to sessionToken if needed
+                migrateScoreboardKey(room, previousSocketId, stableToken);
+
+                // Rebind to new socket
+                player.socketId = socket.id;
+                player.isConnected = true;
+                player.disconnectedAt = null;
+                // Clear any pending disconnect cleanup
+                if (room.disconnectTimeouts.has(stableToken)) {
+                    clearTimeout(room.disconnectTimeouts.get(stableToken));
+                    room.disconnectTimeouts.delete(stableToken);
+                }
+
+                // If this session is the host, rebind host socket
+                if (room.isHostSession(player.sessionToken)) {
+                    room.hostSocketId = socket.id;
+                }
+
+                // Update host socket if needed
+                if (room.hostSocketId === player.socketId || room.hostSocketId === null) {
+                    room.hostSocketId = socket.id;
+                }
+
+                socket.join(roomId);
+                upsertScoreboard(room, player, true);
+
+                socket.emit('room-joined', {
+                    roomId,
+                    isHost: room.isHost(socket.id),
+                    roomState: room.toJSON(),
+                    sessionToken: stableToken
+                });
+
+                // Resend private hole cards if game in progress
+                if (room.game) {
+                    const me = room.game.players.find(p => p.sessionToken === stableToken);
+                    if (me && me.holeCards?.length) {
+                        io.to(socket.id).emit('deal-cards', { holeCards: me.holeCards });
+                    }
+                }
+
+                // Notify others of reconnection
+                io.to(roomId).emit('room-state', room.toJSON());
+                console.log(`[JOIN] ${player.nickname} reconnected to room ${roomId}`);
+                return;
+            }
+
+            // New player/session
+            player = new Player(socket.id, nickname, buyin, stableToken);
             console.log(`[JOIN] Player created with stack: ${player.stack}`);
             room.addPlayer(player);
             socket.join(roomId);
+            upsertScoreboard(room, player, true);
 
-            // Send room state to new player
+            // Send room state to new player (include sessionToken so client can persist)
             socket.emit('room-joined', {
                 roomId,
                 isHost: room.isHost(socket.id),
-                roomState: room.toJSON()
+                roomState: room.toJSON(),
+                sessionToken: stableToken
             });
 
             // Notify others
@@ -63,21 +159,8 @@ export function setupSocketHandlers(io, socket) {
         player.sitDown(seatNumber, room.settings.timeBank);
         console.log(`[SIT] ${player.nickname} chips after sitting: ${player.chips}`);
 
-        // Add player to scoreboard (scoreboard is at Room level)
-        if (!room.scoreboard.has(player.socketId)) {
-            room.scoreboard.set(player.socketId, {
-                socketId: player.socketId,
-                nickname: player.nickname,
-                buyin: player.buyin,
-                stack: player.stack,
-                isActive: true
-            });
-        } else {
-            // Update existing entry
-            const stats = room.scoreboard.get(player.socketId);
-            stats.isActive = true;
-            stats.stack = player.stack;
-        }
+        // Add/update scoreboard (scoreboard is at Room level)
+        upsertScoreboard(room, player, true);
 
         // If game is in progress, set status to waiting
         if (room.game) {
@@ -112,11 +195,8 @@ export function setupSocketHandlers(io, socket) {
 
         player.standUp();
         
-            // Update scoreboard with final stack (scoreboard is at Room level)
-            if (room.scoreboard.has(player.socketId)) {
-                const stats = room.scoreboard.get(player.socketId);
-                stats.stack = player.stack;
-            }
+        // Update scoreboard with final stack (scoreboard is at Room level)
+        upsertScoreboard(room, player, true);
 
         io.to(room.id).emit('room-state', room.toJSON());
     });
@@ -676,25 +756,41 @@ export function setupSocketHandlers(io, socket) {
 
         const player = room.getPlayer(socket.id);
         if (player) {
-            // Mark player as inactive in scoreboard (scoreboard is at Room level)
-            // Do this BEFORE removing player so we can access their data
-            room.markPlayerInactiveInScoreboard(socket.id, player);
+            // Mark as disconnected but keep state for retention window
+            player.isConnected = false;
+            player.disconnectedAt = Date.now();
+            upsertScoreboard(room, player, false);
+            room.markPlayerInactiveInScoreboard(player.sessionToken || player.socketId, player);
 
-            room.removePlayer(socket.id);
-
-            io.to(room.id).emit('player-left', {
-                playerId: socket.id,
+            io.to(room.id).emit('player-disconnected', {
+                playerId: player.sessionToken || player.socketId,
                 nickname: player.nickname
             });
 
             // Broadcast updated room state with scoreboard (scoreboard is at Room level, so always send)
             io.to(room.id).emit('room-state', room.toJSON());
 
-            // Clean up if room is empty
-            if (room.players.length === 0) {
-                stopPlayerTimer(room.id);
-                roomManager.deleteRoom(room.id);
-            }
+            // Schedule cleanup after retention window
+            const timeoutId = setTimeout(() => {
+                const stillRoom = roomManager.getRoom(room.id);
+                if (!stillRoom) return;
+                const existing = stillRoom.getPlayerBySession(player.sessionToken);
+                if (existing && existing.isConnected === false) {
+                    console.log(`[SESSION] Removing player ${existing.nickname} after retention timeout`);
+                    stillRoom.removePlayerBySession(existing.sessionToken);
+                    io.to(stillRoom.id).emit('player-left', {
+                        playerId: existing.sessionToken || existing.socketId,
+                        nickname: existing.nickname
+                    });
+                    io.to(stillRoom.id).emit('room-state', stillRoom.toJSON());
+                    if (stillRoom.players.length === 0) {
+                        stopPlayerTimer(stillRoom.id);
+                        roomManager.deleteRoom(stillRoom.id);
+                    }
+                }
+            }, DISCONNECT_RETENTION_MS);
+
+            room.disconnectTimeouts.set(player.sessionToken || player.socketId, timeoutId);
         }
     });
 }
