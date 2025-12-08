@@ -109,6 +109,38 @@
     justify-content: flex-end;
 }
 
+/* Normalize control button sizing/shape */
+.room-controls .btn,
+.room-controls .buyin-request-btn {
+    min-width: 140px;
+    height: 44px;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    padding: 0 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.room-controls .btn-sm {
+    height: 44px;
+    min-width: 140px;
+    padding: 0 16px;
+}
+
+.room-controls .buyin-request-btn {
+    background: var(--color-primary);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.room-controls .buyin-request-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 .room-stats {
     display: flex;
     gap: var(--space-md);
