@@ -206,10 +206,13 @@ export class BettingRound {
      * Collect all bets into the pot
      */
     collectBets() {
+        let totalCollected = 0;
         for (const player of this.players) {
-            this.pot += player.currentBet;
+            totalCollected += player.currentBet;
+            // Note: currentBet will be reset in resetForNewRound for active players
+            // All-in players keep their currentBet but it's already counted in totalContribution
         }
-        return this.pot;
+        return totalCollected; // Return the amount collected, not the pot (pot is managed by PokerGame)
     }
 
     toJSON() {

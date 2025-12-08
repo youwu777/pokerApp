@@ -430,8 +430,11 @@ export class PokerGame {
     calculateSidePots() {
         const players = this.players.filter(p => p.status !== 'folded');
 
-        // Sort players by total contribution (current bet)
-        const sorted = [...players].sort((a, b) => a.currentBet - b.currentBet);
+        // Sort players by total contribution (use totalContribution which tracks entire hand)
+        const sorted = [...players].sort((a, b) => a.totalContribution - b.totalContribution);
+        
+        console.log(`[SIDE-POT] Calculating side pots. Total pot: ${this.pot}`);
+        console.log(`[SIDE-POT] Player contributions:`, sorted.map(p => `${p.nickname}: ${p.totalContribution}`).join(', '));
 
         this.sidePots = [];
         let remainingPot = this.pot;
@@ -442,7 +445,11 @@ export class PokerGame {
 
             if (eligiblePlayers.length === 0) break;
 
-            const potSize = player.currentBet * eligiblePlayers.length;
+            // Calculate pot size based on this player's contribution level
+            // Each eligible player contributes up to this player's total contribution
+            const previousContribution = i > 0 ? sorted[i - 1].totalContribution : 0;
+            const contributionAtThisLevel = player.totalContribution - previousContribution;
+            const potSize = contributionAtThisLevel * eligiblePlayers.length;
 
             if (potSize > 0) {
                 this.sidePots.push({
@@ -595,6 +602,7 @@ export class PokerGame {
         // 5. Award Pots (Backend Logic)
         // We still need to distribute chips correctly regardless of visual mucking
         const potResults = [];
+        console.log(`[POT] Total pot: ${this.pot}, Side pots: ${this.sidePots.length}`);
         for (const sidePot of this.sidePots) {
             const potPlayerHands = sidePot.eligiblePlayers.map(player => ({
                 player,
@@ -603,9 +611,18 @@ export class PokerGame {
 
             const winners = HandEvaluator.determineWinners(potPlayerHands);
             const sharePerWinner = Math.floor(sidePot.amount / winners.length);
+            const remainder = sidePot.amount - (sharePerWinner * winners.length); // Handle rounding
+
+            console.log(`[POT] Side pot: ${sidePot.amount}, Winners: ${winners.map(w => w.nickname).join(', ')}, Share: ${sharePerWinner}`);
 
             for (const winner of winners) {
+                const chipsBefore = winner.chips;
                 winner.chips += sharePerWinner;
+                // Award remainder to first winner (standard poker rule)
+                if (winner === winners[0] && remainder > 0) {
+                    winner.chips += remainder;
+                }
+                console.log(`[POT] ${winner.nickname}: ${chipsBefore} -> ${winner.chips} (+${sharePerWinner + (winner === winners[0] ? remainder : 0)})`);
             }
 
             potResults.push({
@@ -617,6 +634,7 @@ export class PokerGame {
         // Update stack for all players after hand ends (chips have been distributed)
         this.players.forEach(player => {
             if (player.seatNumber !== null) {
+                console.log(`[STACK] ${player.nickname}: chips=${player.chips}, updating stack from ${player.stack} to ${player.chips}, totalContribution=${player.totalContribution}`);
                 player.stack = player.chips;
                 // Update scoreboard (at Room level)
                 if (this.room.scoreboard.has(player.socketId)) {

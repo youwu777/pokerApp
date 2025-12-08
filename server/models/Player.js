@@ -7,6 +7,7 @@ export class Player {
         this.seatNumber = null; // null = not seated, 0-9 = seat position
         this.chips = 0;
         this.currentBet = 0;
+        this.totalContribution = 0; // Track total chips contributed this hand (for side pot calculation)
         this.holeCards = [];
         this.status = 'waiting'; // waiting, active, folded, all-in
         this.timeBank = 0; // Will be set from room settings when seated
@@ -38,6 +39,7 @@ export class Player {
         const actualBet = Math.min(amount, this.chips);
         this.chips -= actualBet;
         this.currentBet += actualBet;
+        this.totalContribution += actualBet; // Track total contribution for the hand
 
         if (this.chips === 0) {
             this.status = 'all-in';
@@ -54,6 +56,7 @@ export class Player {
 
     resetForNewHand() {
         this.currentBet = 0;
+        this.totalContribution = 0; // Reset total contribution for new hand
         this.holeCards = [];
         this.hasActed = false;
         this.lastAction = null;
@@ -64,7 +67,8 @@ export class Player {
     }
 
     resetForNewRound() {
-        this.currentBet = 0;
+        // Don't reset totalContribution - it tracks the entire hand
+        this.currentBet = 0; // Reset current street bet
         this.hasActed = false;
     }
 
