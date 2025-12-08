@@ -131,6 +131,10 @@
     flex-direction: column;
 }
 
+.mobile-action-panel,
+.mobile-chat-btn {
+    display: none;
+}
 .table-container {
     display: flex;
     align-items: center;
@@ -216,6 +220,7 @@
 
     /* Mobile action panel - fixed at bottom right */
     .mobile-action-panel {
+        display: block;
         position: fixed;
         bottom: 15px;
         right: 15px;
@@ -233,6 +238,7 @@
 
     /* Mobile chat button */
     .mobile-chat-btn {
+        display: flex;
         position: fixed;
         bottom: 80px;
         right: 20px;
@@ -246,7 +252,6 @@
         cursor: pointer;
         box-shadow: var(--shadow-xl);
         z-index: 998;
-        display: flex;
         align-items: center;
         justify-content: center;
         transition: all 0.3s ease;
