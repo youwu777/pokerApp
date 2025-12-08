@@ -308,9 +308,12 @@ export class PokerGame {
                 return this.endHand();
         }
 
-        // Start new betting round
+        // Filter out all-in players - they're already committed and can't act
+        const playersCanAct = activePlayers.filter(p => p.status === 'active');
+        
+        // Start new betting round (only with players who can act)
         this.bettingRound = new BettingRound(
-            activePlayers,
+            playersCanAct,
             this.room.settings.smallBlind,
             this.room.settings.bigBlind,
             0 // Post-flop betting starts at 0
@@ -326,22 +329,23 @@ export class PokerGame {
 
         // First to act is left of dealer
         // Find the first active player whose seat index is > dealerPosition
-        // Since activePlayers are sorted by seat order (inherited from this.players), 
+        // Since playersCanAct are sorted by seat order (inherited from this.players), 
         // we can just find the first one "after" the dealer.
 
         // Find dealer's seat index in the full player list
         const dealerSeatIndex = this.players.findIndex(p => p.seatNumber === this.lastDealerSeat);
 
         // Find the first active player who is "after" the dealer in the full list
-        // Note: activePlayers preserves the order from this.players
-        let nextActivePlayer = activePlayers.find(p => this.players.indexOf(p) > dealerSeatIndex);
+        // Note: playersCanAct preserves the order from this.players (but excludes all-in players)
+        let nextActivePlayer = playersCanAct.find(p => this.players.indexOf(p) > dealerSeatIndex);
 
         // If no one is "after" the dealer, wrap around to the first active player
         if (!nextActivePlayer) {
-            nextActivePlayer = activePlayers[0];
+            nextActivePlayer = playersCanAct[0];
         }
 
-        this.bettingRound.currentPlayerIndex = activePlayers.indexOf(nextActivePlayer);
+        // Set currentPlayerIndex in the betting round (which only contains playersCanAct)
+        this.bettingRound.currentPlayerIndex = playersCanAct.indexOf(nextActivePlayer);
 
         return null; // Hand continues
     }

@@ -12,7 +12,13 @@ export class BettingRound {
      * Get the current player who needs to act
      */
     getCurrentPlayer() {
-        return this.players[this.currentPlayerIndex];
+        const player = this.players[this.currentPlayerIndex];
+        // Safety check: if current player is all-in or folded, skip to next
+        if (player && (player.status === 'all-in' || player.status === 'folded')) {
+            this.moveToNextPlayer();
+            return this.players[this.currentPlayerIndex];
+        }
+        return player;
     }
 
     /**
