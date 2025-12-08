@@ -543,7 +543,10 @@ function startPlayerTimer(io, room) {
             // Recursively try again with the next player
             startPlayerTimer(io, room);
         }
-        // If no active player found, isComplete should catch it on next call
+        // If no active player found, check if round is complete
+        if (room.game.bettingRound.isComplete()) {
+            startPlayerTimer(io, room); // Will handle completion
+        }
         return;
     }
 

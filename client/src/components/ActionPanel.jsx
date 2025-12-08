@@ -17,7 +17,10 @@ export default function ActionPanel({
         setRaiseAmount(minRaise)
     }, [minRaise])
 
-    const amountToCall = Math.max(0, currentBet - myBet) // Never negative
+    // Calculate amount to call, but cap it at available chips
+    // If player has fewer chips than the amount to call, they can only call what they have
+    const rawAmountToCall = Math.max(0, currentBet - myBet) // Never negative
+    const amountToCall = Math.min(rawAmountToCall, myChips) // Cap at available chips
     const canCheck = amountToCall === 0
     const canBet = currentBet === 0
     const canRaise = currentBet > 0 && myChips > amountToCall
