@@ -193,7 +193,9 @@ export function setupSocketHandlers(io, socket) {
             return;
         }
         
-        console.log(`[ACTION] Success: ${result.action}, Round complete: ${room.game.bettingRound.isComplete()}`);
+        // Check if betting round still exists (hand might have ended)
+        const roundComplete = room.game.bettingRound ? room.game.bettingRound.isComplete() : 'N/A (hand ended)';
+        console.log(`[ACTION] Success: ${result.action}, Round complete: ${roundComplete}`);
 
         // Broadcast action
         io.to(room.id).emit('player-acted', {
@@ -204,7 +206,7 @@ export function setupSocketHandlers(io, socket) {
             roomState: room.toJSON()
         });
 
-        // Check if hand ended with showdown results
+        // Check if hand ended with showdown results (this happens in processAction when betting round completes)
         if (result.showdownResults) {
             console.log('[DEBUG] Emitting hand-complete with results');
 
