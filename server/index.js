@@ -8,14 +8,35 @@ import { setupSocketHandlers } from './socket/handlers.js';
 
 const app = express();
 const httpServer = createServer(app);
+
+// Allowed origins for CORS
+const allowedOrigins = [
+  "http://localhost:5173", // Local development
+  "https://youwu777.github.io", // GitHub Pages
+  process.env.ALLOWED_ORIGIN // Allow custom origin via environment variable
+].filter(Boolean); // Remove undefined values
+
 const io = new Server(httpServer, {
   cors: {
-    origin: "http://localhost:5173", // Vite default port
-    methods: ["GET", "POST"]
+    origin: allowedOrigins,
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
 
-app.use(cors());
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+}));
 app.use(express.json());
 
 // REST API endpoints
