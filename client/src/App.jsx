@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { HashRouter as Router, Routes, Route } from 'react-router-dom'
 import { SocketProvider } from './context/SocketContext'
 import Lobby from './components/Lobby'
 import PokerRoom from './components/PokerRoom'

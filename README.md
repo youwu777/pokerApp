@@ -127,6 +127,32 @@ poker_with_m8/
 - Rooms are stored in memory and will be cleared on server restart
 - For production use, consider adding Redis or database persistence
 
+## Deployment
+
+### Frontend (GitHub Pages)
+
+The frontend is configured to deploy automatically to GitHub Pages via GitHub Actions.
+
+1. **Enable GitHub Pages** in your repository settings:
+   - Go to Settings → Pages
+   - Source: GitHub Actions
+
+2. **Set Backend URL** (optional):
+   - If your backend is deployed elsewhere, add a secret:
+     - Go to Settings → Secrets and variables → Actions
+     - Add secret: `VITE_SERVER_URL` with your backend URL
+   - If not set, defaults to `http://localhost:3001`
+
+3. **Deploy**:
+   - Push to `main` branch to trigger automatic deployment
+   - Or manually trigger via Actions tab → "Deploy to GitHub Pages"
+
+The site will be available at: `https://youwu777.github.io/pokerApp/`
+
+### Backend
+
+The backend needs to be deployed separately (e.g., Heroku, Railway, Render, etc.) and the frontend URL updated accordingly.
+
 ## License
 
 MIT

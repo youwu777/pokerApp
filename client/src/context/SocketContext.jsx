@@ -16,7 +16,8 @@ export function SocketProvider({ children }) {
     const [connected, setConnected] = useState(false)
 
     useEffect(() => {
-        const newSocket = io('http://localhost:3001', {
+        const serverUrl = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001'
+        const newSocket = io(serverUrl, {
             autoConnect: true
         })
 

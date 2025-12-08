@@ -10,7 +10,8 @@ export default function Lobby() {
 
     const handleCreateGame = async (settings) => {
         try {
-            const response = await fetch('http://localhost:3001/api/rooms', {
+            const apiUrl = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001'
+            const response = await fetch(`${apiUrl}/api/rooms`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ settings })
