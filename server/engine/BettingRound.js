@@ -189,28 +189,23 @@ export class BettingRound {
                 return true;
             }
             
-            // If all other players are all-in, the last active player doesn't need to act
-            // They can't raise (no one to raise against), so just go to showdown
-            // This handles the case where only one player can act and all others are all-in
+            // If they haven't acted yet, they still need to act (call/fold the all-in)
+            if (!lastActivePlayer.hasActed) {
+                console.log(`[BETTING] Not complete: Last active player hasn't acted yet (needs to call/fold all-in)`);
+                return false;
+            }
+            
+            // After they've acted (called or folded), check if round is complete
+            // If all other players are all-in and this player has acted, round is complete
             if (allInPlayers.length > 0) {
-                console.log(`[BETTING] Complete: Only one active player, all others all-in - auto-complete to showdown`);
-                // Mark player as having acted so they don't get asked to act
-                lastActivePlayer.hasActed = true;
+                console.log(`[BETTING] Complete: Last active player acted, all others all-in - going to showdown`);
                 return true;
             }
             
-            // If there are folded players but no all-in players, the last active player still needs to act
-            // (they might want to bet/raise)
-            // But if they've already acted and matched, round is complete
-            if (lastActivePlayer.hasActed) {
-                const matched = lastActivePlayer.currentBet === this.currentBet || lastActivePlayer.chips === 0;
-                console.log(`[BETTING] Last player acted, matched=${matched} (currentBet=${this.currentBet}, playerBet=${lastActivePlayer.currentBet}, chips=${lastActivePlayer.chips})`);
-                return matched;
-            }
-            
-            // If they haven't acted yet, they still need to act
-            console.log(`[BETTING] Not complete: Last active player hasn't acted`);
-            return false;
+            // If there are folded players but no all-in players, check if they matched the bet
+            const matched = lastActivePlayer.currentBet === this.currentBet || lastActivePlayer.chips === 0;
+            console.log(`[BETTING] Last player acted, matched=${matched} (currentBet=${this.currentBet}, playerBet=${lastActivePlayer.currentBet}, chips=${lastActivePlayer.chips})`);
+            return matched;
         }
 
         // Multiple active players: all must have acted and matched the current bet
