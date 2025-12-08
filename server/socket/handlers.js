@@ -228,9 +228,18 @@ export function setupSocketHandlers(io, socket) {
                         return;
                     }
 
-                    // Process stand up requests before next hand
+                    // Process stand up requests and auto-stand-up players with 0 stack
                     for (const player of currentRoom.players) {
-                        if (player.standUpNextHand) {
+                        // Auto-stand-up players with 0 stack
+                        if (player.seatNumber !== null && player.stack === 0) {
+                            console.log(`[AUTO-STANDUP] ${player.nickname} forced to stand up (0 stack)`);
+                            player.standUp();
+                            // Update scoreboard with final stack (scoreboard is at Room level)
+                            if (currentRoom.scoreboard.has(player.socketId)) {
+                                const stats = currentRoom.scoreboard.get(player.socketId);
+                                stats.stack = player.stack;
+                            }
+                        } else if (player.standUpNextHand) {
                             console.log(`[DEBUG] ${player.nickname} standing up before next hand`);
                             player.standUp();
                             // Update scoreboard with final stack (scoreboard is at Room level)
@@ -464,9 +473,18 @@ function startPlayerTimer(io, room) {
                     const currentRoom = roomManager.getRoom(room.id);
                     if (!currentRoom) return;
 
-                    // Process stand up requests
+                    // Process stand up requests and auto-stand-up players with 0 stack
                     for (const player of currentRoom.players) {
-                        if (player.standUpNextHand) {
+                        // Auto-stand-up players with 0 stack
+                        if (player.seatNumber !== null && player.stack === 0) {
+                            console.log(`[AUTO-STANDUP] ${player.nickname} forced to stand up (0 stack)`);
+                            player.standUp();
+                            // Update scoreboard with final stack (scoreboard is at Room level)
+                            if (currentRoom.scoreboard.has(player.socketId)) {
+                                const stats = currentRoom.scoreboard.get(player.socketId);
+                                stats.stack = player.stack;
+                            }
+                        } else if (player.standUpNextHand) {
                             player.standUp();
                             // Update scoreboard with final stack (scoreboard is at Room level)
                             if (currentRoom.scoreboard.has(player.socketId)) {
@@ -579,9 +597,18 @@ function startPlayerTimer(io, room) {
                     const currentRoom = roomManager.getRoom(room.id);
                     if (!currentRoom) return;
 
-                    // Process stand up requests
+                    // Process stand up requests and auto-stand-up players with 0 stack
                     for (const player of currentRoom.players) {
-                        if (player.standUpNextHand) {
+                        // Auto-stand-up players with 0 stack
+                        if (player.seatNumber !== null && player.stack === 0) {
+                            console.log(`[AUTO-STANDUP] ${player.nickname} forced to stand up (0 stack)`);
+                            player.standUp();
+                            // Update scoreboard with final stack (scoreboard is at Room level)
+                            if (currentRoom.scoreboard.has(player.socketId)) {
+                                const stats = currentRoom.scoreboard.get(player.socketId);
+                                stats.stack = player.stack;
+                            }
+                        } else if (player.standUpNextHand) {
                             player.standUp();
                             // Update scoreboard with final stack (scoreboard is at Room level)
                             if (currentRoom.scoreboard.has(player.socketId)) {

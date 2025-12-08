@@ -393,6 +393,11 @@ export class PokerGame {
                         const stats = this.room.scoreboard.get(player.socketId);
                         stats.stack = player.stack;
                     }
+                    // Auto-stand-up players with 0 stack
+                    if (player.stack === 0) {
+                        player.standUp();
+                        console.log(`[AUTO-STANDUP] ${player.nickname} forced to stand up (0 stack)`);
+                    }
                 }
             });
             this.room.handCount++;
@@ -614,6 +619,11 @@ export class PokerGame {
                 if (this.room.scoreboard.has(player.socketId)) {
                     const stats = this.room.scoreboard.get(player.socketId);
                     stats.stack = player.stack;
+                }
+                // Auto-stand-up players with 0 stack
+                if (player.stack === 0) {
+                    player.standUp();
+                    console.log(`[AUTO-STANDUP] ${player.nickname} forced to stand up (0 stack)`);
                 }
             }
         });
