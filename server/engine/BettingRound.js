@@ -58,10 +58,12 @@ export class BettingRound {
                 }
                 // Player can only call up to their available chips
                 // If amountToCall > player.chips, they'll go all-in
+                const chipsBeforeCall = player.chips;
                 const callAmount = player.bet(amountToCall);
-                // Check if player went all-in (couldn't call the full amount)
-                const wentAllIn = callAmount < amountToCall;
+                // Check if player went all-in (ran out of chips or couldn't call the full amount)
+                const wentAllIn = player.chips === 0 || callAmount < rawAmountToCall;
                 player.lastAction = wentAllIn ? 'all-in' : 'call';
+                console.log(`[CALL] ${player.nickname} called ${callAmount} (had ${chipsBeforeCall}, now ${player.chips}, status: ${player.status})`);
                 break;
 
             case 'bet':

@@ -267,6 +267,9 @@ export class PokerGame {
         // Collect bets from previous round
         this.pot += this.bettingRound.collectBets();
 
+        // Log player statuses before reset
+        console.log(`[DEBUG] Player statuses before reset:`, this.players.map(p => `${p.nickname}: ${p.status} (chips: ${p.chips})`).join(', '));
+
         // Reset players for new betting round
         this.players.forEach(p => {
             if (p.status !== 'folded' && p.status !== 'all-in') {
@@ -274,7 +277,17 @@ export class PokerGame {
             }
         });
 
+        // Ensure players with 0 chips are marked as all-in
+        this.players.forEach(p => {
+            if (p.status === 'active' && p.chips === 0) {
+                console.log(`[DEBUG] Marking ${p.nickname} as all-in (0 chips)`);
+                p.status = 'all-in';
+            }
+        });
+
         const activePlayers = this.players.filter(p => p.status !== 'folded');
+        
+        console.log(`[DEBUG] After reset - activePlayers: ${activePlayers.length}, all-in: ${this.players.filter(p => p.status === 'all-in').length}`);
 
         // Check if only one player remains
         if (activePlayers.length === 1) {
