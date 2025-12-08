@@ -61,7 +61,9 @@ export class Player {
         this.hasActed = false;
         this.lastAction = null;
 
-        if (this.status !== 'all-in') {
+        // Always reset to active for a new hand (all-in status only applies to current hand)
+        // If player has 0 chips, they should have been stood up already
+        if (this.status !== 'folded') {
             this.status = 'active';
         }
     }
