@@ -131,10 +131,21 @@ export class BettingRound {
      * Move to next active player
      */
     moveToNextPlayer() {
+        const initialIndex = this.currentPlayerIndex;
+        let attempts = 0;
         do {
             this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length;
+            attempts++;
+            // Safety check to prevent infinite loop
+            if (attempts > this.players.length) {
+                console.error(`[ERROR] Infinite loop in moveToNextPlayer. Current index: ${this.currentPlayerIndex}, Players:`, 
+                    this.players.map(p => `${p.nickname}(${p.status})`));
+                break;
+            }
         } while (this.players[this.currentPlayerIndex].status === 'folded' || 
                  this.players[this.currentPlayerIndex].status === 'all-in');
+        
+        console.log(`[BETTING] Moved to next player: ${this.players[this.currentPlayerIndex].nickname} (index: ${this.currentPlayerIndex})`);
     }
 
     /**
@@ -145,8 +156,12 @@ export class BettingRound {
         const allInPlayers = this.players.filter(p => p.status === 'all-in');
         const foldedPlayers = this.players.filter(p => p.status === 'folded');
 
+        console.log(`[BETTING] isComplete check: active=${activePlayers.length}, allIn=${allInPlayers.length}, folded=${foldedPlayers.length}`);
+        console.log(`[BETTING] currentBet=${this.currentBet}, active players:`, activePlayers.map(p => `${p.nickname}(bet=${p.currentBet}, acted=${p.hasActed})`));
+
         // If no active players can act (all are all-in or folded), round is complete
         if (activePlayers.length === 0) {
+            console.log(`[BETTING] Complete: No active players`);
             return true;
         }
 
@@ -157,20 +172,26 @@ export class BettingRound {
             // If the last active player has already acted and matched the bet, round is complete
             // OR if they're all-in (shouldn't happen, but safety check)
             if (lastActivePlayer.status === 'all-in') {
+                console.log(`[BETTING] Complete: Last player is all-in`);
                 return true;
             }
             // If they haven't acted yet, they still need to act (call/fold/raise)
             if (!lastActivePlayer.hasActed) {
+                console.log(`[BETTING] Not complete: Last active player hasn't acted`);
                 return false;
             }
             // If they've acted, check if they matched the bet
-            return lastActivePlayer.currentBet === this.currentBet || lastActivePlayer.chips === 0;
+            const matched = lastActivePlayer.currentBet === this.currentBet || lastActivePlayer.chips === 0;
+            console.log(`[BETTING] Last player acted, matched=${matched} (currentBet=${this.currentBet}, playerBet=${lastActivePlayer.currentBet}, chips=${lastActivePlayer.chips})`);
+            return matched;
         }
 
         // Multiple active players: all must have acted and matched the current bet
         // All-in players don't need to act, they're already committed
         const allActed = activePlayers.every(p => p.hasActed);
         const allMatched = activePlayers.every(p => p.currentBet === this.currentBet || p.chips === 0);
+        
+        console.log(`[BETTING] Multiple active players: allActed=${allActed}, allMatched=${allMatched}`);
 
         return allActed && allMatched;
     }

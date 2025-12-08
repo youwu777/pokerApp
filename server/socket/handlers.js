@@ -182,14 +182,18 @@ export function setupSocketHandlers(io, socket) {
         // Stop current timer
         stopPlayerTimer(room.id);
 
+        console.log(`[ACTION] ${player.nickname} ${action} ${amount || ''}`);
         const result = room.game.processAction(player, action, amount);
 
         if (!result.success) {
+            console.log(`[ACTION] Failed: ${result.message}`);
             socket.emit('error', { message: result.message });
             // Restart timer
             startPlayerTimer(io, room);
             return;
         }
+        
+        console.log(`[ACTION] Success: ${result.action}, Round complete: ${room.game.bettingRound.isComplete()}`);
 
         // Broadcast action
         io.to(room.id).emit('player-acted', {
