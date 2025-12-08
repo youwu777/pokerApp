@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import './Chat.css'
 
-export default function Chat({ socket, roomId }) {
+export default function Chat({ socket, roomId, onClose }) {
     const [messages, setMessages] = useState([])
     const [input, setInput] = useState('')
     const messagesEndRef = useRef(null)
@@ -44,6 +44,15 @@ export default function Chat({ socket, roomId }) {
         <div className="chat">
             <div className="chat-header">
                 <h4>Chat</h4>
+                {onClose && (
+                    <button
+                        className="chat-close-btn"
+                        onClick={onClose}
+                        aria-label="Close chat"
+                    >
+                        ×
+                    </button>
+                )}
             </div>
 
             <div className="chat-messages">

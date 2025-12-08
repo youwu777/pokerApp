@@ -235,28 +235,166 @@
 }
 
 @media (max-width: 768px) {
+    .poker-table-wrapper {
+        width: 100%;
+        padding: 5px;
+        overflow: visible;
+        position: relative;
+    }
+
     .poker-table {
         width: 100%;
-        max-width: 500px;
-        height: 300px;
-        border-width: 8px;
-        border-radius: 50px;
+        max-width: 320px;
+        height: 480px; /* Optimized height for mobile */
+        border-width: 5px;
+        border-radius: 35px;
+        margin: 0 auto;
+        position: relative;
+    }
+
+    .table-center {
+        gap: var(--space-md);
     }
 
     .pot-amount {
-        font-size: 1.2rem;
+        font-size: 1rem;
     }
 
     .waiting-icon {
-        font-size: 2rem;
+        font-size: 1.5rem;
     }
 
     .waiting-text {
-        font-size: 0.95rem;
+        font-size: 0.85rem;
+    }
+
+    .community-cards {
+        gap: 4px;
     }
 
     .community-cards .playing-card {
-        width: 50px;
-        height: 70px;
+        width: 40px;
+        height: 56px;
+    }
+
+    /* Mobile Vertical Layout: 1 top, 4 left, 4 right, 1 bottom */
+    /* Optimized spacing for smaller seats */
+    
+    /* Top - 1 player (seat 0) */
+    .seat-0 {
+        top: -45px;
+        left: 50%;
+        transform: translateX(-50%);
+        bottom: auto;
+    }
+
+    /* Left Side - 4 players (seats 1-4) stacked vertically */
+    .seat-1 {
+        top: 10%;
+        left: -48px;
+        transform: translateY(-50%);
+        bottom: auto;
+    }
+
+    .seat-2 {
+        top: 27%;
+        left: -48px;
+        transform: translateY(-50%);
+        bottom: auto;
+    }
+
+    .seat-3 {
+        top: 50%;
+        left: -48px;
+        transform: translateY(-50%);
+        bottom: auto;
+    }
+
+    .seat-4 {
+        top: 73%;
+        left: -48px;
+        transform: translateY(-50%);
+        bottom: auto;
+    }
+
+    /* Right Side - 4 players (seats 5-8) stacked vertically */
+    .seat-5 {
+        top: 10%;
+        right: -48px;
+        left: auto;
+        transform: translateY(-50%);
+        bottom: auto;
+    }
+
+    .seat-6 {
+        top: 27%;
+        right: -48px;
+        left: auto;
+        transform: translateY(-50%);
+        bottom: auto;
+    }
+
+    .seat-7 {
+        top: 50%;
+        right: -48px;
+        left: auto;
+        transform: translateY(-50%);
+        bottom: auto;
+    }
+
+    .seat-8 {
+        top: 73%;
+        right: -48px;
+        left: auto;
+        transform: translateY(-50%);
+        bottom: auto;
+    }
+
+    /* Bottom - 1 player (seat 9) moved to left side to avoid action panel */
+    .seat-9 {
+        bottom: -45px;
+        left: 10%;
+        transform: translateX(-50%);
+        top: auto;
+        right: auto;
+    }
+
+    /* Mobile bet positioning - adjusted for smaller seats */
+    .seat-0 .current-bet {
+        top: auto;
+        bottom: -25px;
+        font-size: 0.65rem;
+    }
+
+    .seat-1 .current-bet,
+    .seat-2 .current-bet,
+    .seat-3 .current-bet,
+    .seat-4 .current-bet {
+        left: 95px;
+        right: auto;
+        top: 50%;
+        bottom: auto;
+        transform: translateY(-50%);
+        font-size: 0.65rem;
+    }
+
+    .seat-5 .current-bet,
+    .seat-6 .current-bet,
+    .seat-7 .current-bet,
+    .seat-8 .current-bet {
+        right: 95px;
+        left: auto;
+        top: 50%;
+        bottom: auto;
+        transform: translateY(-50%);
+        font-size: 0.65rem;
+    }
+
+    .seat-9 .current-bet {
+        bottom: auto;
+        top: -25px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 0.65rem;
     }
 }

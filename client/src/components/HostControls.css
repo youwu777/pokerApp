@@ -5,44 +5,11 @@
     flex-wrap: wrap;
 }
 
-.start-game-section {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-    padding: var(--space-sm);
-    background: rgba(255, 215, 0, 0.1);
-    border-radius: var(--radius-lg);
-    border: 2px solid var(--color-gold);
-    animation: glow 2s ease infinite;
-}
-
 .start-game-btn {
-    font-size: 1.1rem;
-    font-weight: 700;
-    box-shadow: var(--shadow-glow);
+    /* Same size as Score button - uses btn-sm class */
 }
 
-.player-ready-count {
-    font-size: 0.9rem;
-    font-weight: 600;
-}
-
-.player-ready-count .ready {
-    color: var(--color-success);
-}
-
-.player-ready-count .waiting {
-    color: var(--color-warning);
-}
-
-@media (max-width: 768px) {
-    .host-controls {
-        width: 100%;
-        justify-content: space-between;
-    }
-
-    .start-game-section {
-        width: 100%;
-        justify-content: center;
-    }
+.start-game-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }

@@ -113,6 +113,63 @@
     width: 100%;
 }
 
+/* Mobile-specific styles */
+.mobile-action-panel .action-panel {
+    background: rgba(0, 0, 0, 0.95);
+    border-radius: var(--radius-md);
+    padding: var(--space-xs);
+    max-height: none; /* No scroll on mobile panel */
+    max-width: 100%;
+    overflow: visible;
+    width: 100%;
+}
+
+.mobile-action-panel .action-buttons {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-xs);
+    margin-bottom: var(--space-sm);
+}
+
+.mobile-action-panel .action-buttons .btn {
+    font-size: 0.7rem;
+    padding: 4px 6px;
+    min-height: 32px;
+    font-weight: 500;
+}
+
+.mobile-action-panel .raise-controls {
+    margin-top: var(--space-xs);
+    gap: var(--space-xs);
+    padding-top: 0;
+    border-top: none;
+}
+
+/* Hide pot multiplier buttons on mobile */
+.mobile-action-panel .preset-buttons {
+    display: none;
+}
+
+/* Hide the range slider on mobile, keep manual input */
+.mobile-action-panel .raise-slider input[type="range"] {
+    display: none;
+}
+
+.mobile-action-panel .raise-amount-input {
+    font-size: 0.7rem;
+}
+
+.mobile-action-panel .raise-amount-input input {
+    font-size: 0.7rem;
+    padding: 2px 4px;
+    width: 60px;
+}
+
+.mobile-action-panel .waiting-message {
+    font-size: 0.75rem;
+    padding: var(--space-xs);
+}
+
 @media (max-width: 768px) {
     .action-panel {
         padding: var(--space-md);

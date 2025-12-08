@@ -27,6 +27,7 @@ export default function PokerRoom() {
     const [error, setError] = useState(null)
     const [roomNotFound, setRoomNotFound] = useState(false)
     const [visibleCommunityCards, setVisibleCommunityCards] = useState([])
+    const [showChat, setShowChat] = useState(false)
 
     useEffect(() => {
         if (!socket) return
@@ -290,7 +291,6 @@ export default function PokerRoom() {
                             <button
                                 className={myPlayer.standUpNextHand ? "btn btn-secondary btn-sm" : "btn btn-outline-danger btn-sm"}
                                 onClick={handleStandUp}
-                                style={{ marginRight: '10px' }}
                                 disabled={myPlayer.standUpNextHand && !roomState.gameState}
                             >
                                 {myPlayer.standUpNextHand ? "Leave Next Hand" : "Leave Seat"}
@@ -319,8 +319,8 @@ export default function PokerRoom() {
             <BuyInNotification socket={socket} isHost={isHost} />
             
             <div className="room-content">
-                <div className="sidebar">
-                    <Chat socket={socket} roomId={roomId} />
+                <div className={`sidebar chat-sidebar ${showChat ? 'chat-open' : ''}`}>
+                    <Chat socket={socket} roomId={roomId} onClose={() => setShowChat(false)} />
                 </div>
 
                 <div className="table-container">
@@ -337,7 +337,7 @@ export default function PokerRoom() {
                     />
                 </div>
 
-                <div className="action-sidebar">
+                <div className="action-sidebar desktop-action-sidebar">
                     {myPlayer && myPlayer.seatNumber !== null && roomState.gameState && (
                         <ActionPanel
                             isMyTurn={roomState.gameState.currentPlayer === myPlayer.socketId}
@@ -350,6 +350,31 @@ export default function PokerRoom() {
                         />
                     )}
                 </div>
+
+                {/* Mobile Action Panel - Fixed at bottom */}
+                {myPlayer && myPlayer.seatNumber !== null && roomState.gameState && (
+                    <div className="mobile-action-panel">
+                        <ActionPanel
+                            isMyTurn={roomState.gameState.currentPlayer === myPlayer.socketId}
+                            currentBet={roomState.gameState.currentBet}
+                            myBet={myPlayer.currentBet}
+                            myChips={myPlayer.chips}
+                            minRaise={roomState.gameState.minRaise}
+                            pot={roomState.gameState.pot}
+                            onAction={handlePlayerAction}
+                        />
+                    </div>
+                )}
+
+                {/* Mobile Chat Button */}
+                <button
+                    className="mobile-chat-btn"
+                    onClick={() => setShowChat(!showChat)}
+                    aria-label="Toggle chat"
+                >
+                    💬
+                    {showChat && <span className="chat-badge">●</span>}
+                </button>
             </div>
         </div>
     )

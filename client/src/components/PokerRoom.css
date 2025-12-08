@@ -73,11 +73,26 @@
 }
 
 .room-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
     display: flex;
     justify-content: space-between;
+    align-items: flex-start;
     gap: var(--space-lg);
     padding: var(--space-lg);
-    overflow: hidden;
+    z-index: 100;
+    background: linear-gradient(to bottom, var(--color-bg-darker) 0%, var(--color-bg-darker) 80%, transparent 100%);
+    pointer-events: none; /* Allow clicks to pass through except on interactive elements */
+}
+
+.room-header > * {
+    pointer-events: auto; /* Re-enable pointer events on children */
+}
+
+.room-info {
+    pointer-events: auto;
 }
 
 .room-info h3 {
@@ -89,7 +104,9 @@
 .room-controls {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+    justify-content: flex-end;
 }
 
 .room-stats {
@@ -105,6 +122,7 @@
     grid-template-columns: 250px 1fr 250px;
     gap: var(--space-lg);
     padding: var(--space-lg);
+    padding-top: calc(var(--space-lg) + 100px); /* Add top padding to account for fixed header */
     overflow: hidden;
 }
 
@@ -139,12 +157,130 @@
 
 @media (max-width: 768px) {
     .room-header {
-        flex-direction: column;
-        gap: var(--space-md);
+        flex-direction: row;
+        justify-content: space-between;
+        gap: var(--space-sm);
         align-items: flex-start;
+        padding: var(--space-sm) var(--space-md);
+    }
+
+    .room-info h3 {
+        font-size: 1rem;
+    }
+
+    .room-stats {
+        font-size: 0.8rem;
+    }
+
+    .room-controls {
+        width: 100%;
+        flex-wrap: wrap;
+        gap: var(--space-xs);
+    }
+
+    .room-controls .btn {
+        font-size: 0.8rem;
+        padding: var(--space-xs) var(--space-sm);
     }
 
     .room-content {
-        padding: var(--space-md);
+        padding: var(--space-sm);
+        padding-top: calc(var(--space-sm) + 80px); /* Account for fixed header on mobile */
+        grid-template-columns: 1fr;
+        position: relative;
+    }
+
+    /* Hide sidebars on mobile */
+    .sidebar.chat-sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.9);
+        z-index: 1000;
+        padding: var(--space-lg);
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        max-width: 100%;
+        overflow-y: auto;
+    }
+
+    .sidebar.chat-sidebar.chat-open {
+        transform: translateX(0);
+    }
+
+    .action-sidebar.desktop-action-sidebar {
+        display: none;
+    }
+
+    /* Mobile action panel - fixed at bottom right */
+    .mobile-action-panel {
+        position: fixed;
+        bottom: 15px;
+        right: 15px;
+        left: auto;
+        max-width: 240px;
+        width: auto;
+        z-index: 999;
+        padding: var(--space-sm);
+        background: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(10px);
+        border: 2px solid rgba(255, 215, 0, 0.3);
+        border-radius: var(--radius-md);
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Mobile chat button */
+    .mobile-chat-btn {
+        position: fixed;
+        bottom: 80px;
+        right: 20px;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: var(--color-primary);
+        color: white;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        box-shadow: var(--shadow-xl);
+        z-index: 998;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+
+    .mobile-chat-btn:hover {
+        transform: scale(1.1);
+        background: var(--color-primary-dark);
+    }
+
+    .mobile-chat-btn .chat-badge {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 12px;
+        height: 12px;
+        background: #10b981;
+        border-radius: 50%;
+        border: 2px solid white;
+    }
+
+    .table-container {
+        padding: 20px 5px 180px; /* Reduced top padding, space for mobile action panel */
+        overflow: visible;
+        min-height: calc(100vh - 150px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+    }
+
+    .poker-table-wrapper {
+        margin: 0 auto;
+        width: 100%;
+        max-width: 100%;
     }
 }

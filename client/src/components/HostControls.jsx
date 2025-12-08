@@ -24,22 +24,13 @@ export default function HostControls({ roomState, socket }) {
   return (
     <div className="host-controls">
       {!roomState.gameState && (
-        <div className="start-game-section">
-          <button
-            className="btn btn-primary btn-lg start-game-btn"
-            onClick={handleStartHand}
-            disabled={!canStart}
-          >
-            🎮 Start Game
-          </button>
-          <span className="player-ready-count">
-            {seatedPlayers >= 2 ? (
-              <span className="ready">✓ {seatedPlayers} players ready</span>
-            ) : (
-              <span className="waiting">Waiting for players... ({seatedPlayers}/2)</span>
-            )}
-          </span>
-        </div>
+        <button
+          className="btn btn-primary btn-sm start-game-btn"
+          onClick={handleStartHand}
+          disabled={!canStart}
+        >
+          🎮 Start Game ({seatedPlayers}/2)
+        </button>
       )}
 
       {roomState.gameState && (

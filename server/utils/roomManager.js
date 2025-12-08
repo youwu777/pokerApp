@@ -6,8 +6,14 @@ class RoomManager {
     }
 
     createRoom(roomId, settings) {
+        // Check if room already exists - if so, delete it first to ensure fresh state
+        if (this.rooms.has(roomId)) {
+            console.log(`[ROOM] Room ${roomId} already exists, deleting old instance`);
+            this.deleteRoom(roomId);
+        }
         const room = new Room(roomId, settings);
         this.rooms.set(roomId, room);
+        console.log(`[ROOM] Created new room ${roomId} with fresh scoreboard (size: ${room.scoreboard.size})`);
         return room;
     }
 

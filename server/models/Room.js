@@ -104,6 +104,13 @@ export class Room {
     }
 
     toJSON() {
+        // Ensure scoreboard only contains players from this room
+        const roomScoreboard = Array.from(this.scoreboard.values()).filter(entry => {
+            // Only include entries for players who are or were in this room
+            const playerInRoom = this.players.some(p => p.socketId === entry.socketId);
+            return playerInRoom || !entry.isActive; // Include active players or inactive players who were in this room
+        });
+        
         return {
             id: this.id,
             hostSocketId: this.hostSocketId,
@@ -112,7 +119,7 @@ export class Room {
             isPaused: this.isPaused,
             handCount: this.handCount,
             gameState: this.game ? this.game.toJSON() : null,
-            scoreboard: Array.from(this.scoreboard.values())
+            scoreboard: roomScoreboard // Only include scoreboard entries for this room
         };
     }
 }
