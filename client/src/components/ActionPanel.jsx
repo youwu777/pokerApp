@@ -29,6 +29,13 @@ export default function ActionPanel({
     // This represents the player's total bet after raising
     const totalRaiseAmount = amountToCall + raiseAmount + myBet
 
+    const setRaiseFromTotal = (total) => {
+        const desired = Number(total) - amountToCall - myBet
+        if (Number.isNaN(desired)) return
+        const clamped = Math.max(minRaise, Math.min(desired, myChips))
+        setRaiseAmount(clamped)
+    }
+
     const handleFold = () => onAction('fold')
     const handleCheck = () => onAction('check')
     const handleCall = () => onAction('call')
@@ -116,7 +123,7 @@ export default function ActionPanel({
                             min={minRaise}
                             max={myChips}
                             value={totalRaiseAmount}
-                            onChange={(e) => setRaiseAmount(Number(e.target.value))}
+                            onChange={(e) => setRaiseFromTotal(Number(e.target.value))}
                             className="range range-primary range-sm"
                         />
                         <div className="raise-amount-input">
@@ -125,11 +132,11 @@ export default function ActionPanel({
                                 type="number"
                                 min={minRaise}
                                 max={myChips}
-                                value={raiseAmount}
+                                value={totalRaiseAmount}
                                 onChange={(e) => {
                                     const val = Number(e.target.value);
                                     if (!Number.isNaN(val)) {
-                                        setRaiseAmount(val);
+                                        setRaiseFromTotal(val);
                                     }
                                 }}
                                 className="input input-bordered input-sm w-24 text-center"
