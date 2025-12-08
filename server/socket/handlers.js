@@ -443,8 +443,85 @@ export function setupSocketHandlers(io, socket) {
 function startPlayerTimer(io, room) {
     if (!room.game || !room.game.bettingRound) return;
 
+    // Check if betting round is complete before trying to start timer
+    if (room.game.bettingRound.isComplete()) {
+        // Betting round is complete, advance street or end hand
+        const showdownResults = room.game.advanceStreet();
+        if (showdownResults) {
+            io.to(room.id).emit('hand-complete', {
+                results: showdownResults,
+                roomState: room.toJSON()
+            });
+            // Auto-start next hand after 5 seconds
+            setTimeout(() => {
+                try {
+                    const currentRoom = roomManager.getRoom(room.id);
+                    if (!currentRoom) return;
+
+                    // Process stand up requests
+                    for (const player of currentRoom.players) {
+                        if (player.standUpNextHand) {
+                            player.standUp();
+                            // Update scoreboard with final stack (scoreboard is at Room level)
+                            if (currentRoom.scoreboard.has(player.socketId)) {
+                                const stats = currentRoom.scoreboard.get(player.socketId);
+                                stats.stack = player.stack;
+                            }
+                        }
+                    }
+
+                    io.to(currentRoom.id).emit('room-state', currentRoom.toJSON());
+
+                    const seatedPlayers = currentRoom.getSeatedPlayers();
+                    if (seatedPlayers.length < 2) {
+                        currentRoom.game = null;
+                        io.to(currentRoom.id).emit('room-state', currentRoom.toJSON());
+                        return;
+                    }
+
+                    const newGameState = currentRoom.game.startNewHand();
+
+                    for (const player of currentRoom.game.players) {
+                        io.to(player.socketId).emit('deal-cards', {
+                            holeCards: player.holeCards
+                        });
+                    }
+
+                    io.to(currentRoom.id).emit('new-hand', {
+                        gameState: newGameState,
+                        roomState: currentRoom.toJSON()
+                    });
+
+                    startPlayerTimer(io, currentRoom);
+                } catch (error) {
+                    console.error('[ERROR] Auto-start failed after all-in:', error);
+                    io.to(room.id).emit('error', { message: 'Failed to start next hand' });
+                }
+            }, 5000);
+        } else {
+            // Advanced to next street, start timer for first player
+            io.to(room.id).emit('room-state', room.toJSON());
+            startPlayerTimer(io, room);
+        }
+        return;
+    }
+
     const currentPlayer = room.game.bettingRound.getCurrentPlayer();
     if (!currentPlayer) return;
+    
+    // Don't start timer for all-in or folded players
+    // moveToNextPlayer should have skipped them, but double-check
+    if (currentPlayer.status !== 'active') {
+        // Skip to next active player
+        room.game.bettingRound.moveToNextPlayer();
+        const nextPlayer = room.game.bettingRound.getCurrentPlayer();
+        if (nextPlayer && nextPlayer.status === 'active') {
+            // Recursively try again with the next player
+            startPlayerTimer(io, room);
+        }
+        // If no active player found, isComplete should catch it on next call
+        return;
+    }
 
     const timer = new PlayerTimer(
         currentPlayer,

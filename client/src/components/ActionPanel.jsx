@@ -17,7 +17,7 @@ export default function ActionPanel({
         setRaiseAmount(minRaise)
     }, [minRaise])
 
-    const amountToCall = currentBet - myBet
+    const amountToCall = Math.max(0, currentBet - myBet) // Never negative
     const canCheck = amountToCall === 0
     const canBet = currentBet === 0
     const canRaise = currentBet > 0 && myChips > amountToCall

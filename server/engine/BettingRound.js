@@ -59,6 +59,14 @@ export class BettingRound {
                 const betAmount = player.bet(amount);
                 this.currentBet = player.currentBet;
                 this.minRaise = amount;
+                
+                // Reset hasActed for other active players so they can respond to the bet
+                this.players.forEach(p => {
+                    if (p !== player && p.status === 'active') {
+                        p.hasActed = false;
+                    }
+                });
+                
                 player.lastAction = betAmount < amount ? 'all-in' : `bet ${amount}`;
                 break;
 
@@ -76,13 +84,21 @@ export class BettingRound {
                 // Standard poker rule: min raise is at least the size of the previous raise
                 // So if the previous raise was 50, the next min raise must also be at least 50
                 this.minRaise = amount;
+                
+                // Reset hasActed for other active players so they can respond to the raise
+                this.players.forEach(p => {
+                    if (p !== player && p.status === 'active') {
+                        p.hasActed = false;
+                    }
+                });
 
                 player.lastAction = raiseAmount < totalRaise ? 'all-in' : `raise ${totalRaise}`;
                 break;
 
             case 'all-in':
                 const allInAmount = player.bet(player.chips);
-                if (player.currentBet > this.currentBet) {
+                const betIncreased = player.currentBet > this.currentBet;
+                if (betIncreased) {
                     const raiseDelta = player.currentBet - this.currentBet;
                     this.currentBet = player.currentBet;
                     // If all-in raise is valid (>= minRaise), update minRaise
@@ -90,6 +106,12 @@ export class BettingRound {
                     if (raiseDelta >= this.minRaise) {
                         this.minRaise = raiseDelta;
                     }
+                    // Reset hasActed for other active players so they can respond to the raise
+                    this.players.forEach(p => {
+                        if (p !== player && p.status === 'active') {
+                            p.hasActed = false;
+                        }
+                    });
                 }
                 player.lastAction = 'all-in';
                 break;
@@ -111,7 +133,8 @@ export class BettingRound {
     moveToNextPlayer() {
         do {
             this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length;
-        } while (this.players[this.currentPlayerIndex].status === 'folded');
+        } while (this.players[this.currentPlayerIndex].status === 'folded' || 
+                 this.players[this.currentPlayerIndex].status === 'all-in');
     }
 
     /**
@@ -119,13 +142,33 @@ export class BettingRound {
      */
     isComplete() {
         const activePlayers = this.players.filter(p => p.status === 'active');
+        const allInPlayers = this.players.filter(p => p.status === 'all-in');
+        const foldedPlayers = this.players.filter(p => p.status === 'folded');
 
-        // Only one player left (others folded or all-in)
-        if (activePlayers.length <= 1) {
+        // If no active players can act (all are all-in or folded), round is complete
+        if (activePlayers.length === 0) {
             return true;
         }
 
-        // All players have acted and matched the current bet
+        // If only one active player and all others are folded/all-in, check if they need to act
+        // After an all-in, other players still need a chance to call or fold
+        if (activePlayers.length === 1) {
+            const lastActivePlayer = activePlayers[0];
+            // If the last active player has already acted and matched the bet, round is complete
+            // OR if they're all-in (shouldn't happen, but safety check)
+            if (lastActivePlayer.status === 'all-in') {
+                return true;
+            }
+            // If they haven't acted yet, they still need to act (call/fold/raise)
+            if (!lastActivePlayer.hasActed) {
+                return false;
+            }
+            // If they've acted, check if they matched the bet
+            return lastActivePlayer.currentBet === this.currentBet || lastActivePlayer.chips === 0;
+        }
+
+        // Multiple active players: all must have acted and matched the current bet
+        // All-in players don't need to act, they're already committed
         const allActed = activePlayers.every(p => p.hasActed);
         const allMatched = activePlayers.every(p => p.currentBet === this.currentBet || p.chips === 0);
 
