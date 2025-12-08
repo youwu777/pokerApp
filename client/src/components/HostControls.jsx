@@ -33,27 +33,6 @@ export default function HostControls({ roomState, socket }) {
         </button>
       )}
 
-      {roomState.gameState && (
-        <>
-          <button
-            className="btn btn-success btn-sm"
-            onClick={handleStartHand}
-            disabled={!roomState.isPaused}
-          >
-            Next Hand
-          </button>
-
-          {!roomState.isPaused && (
-            <button
-              className="btn btn-secondary btn-sm"
-              onClick={handlePause}
-            >
-              Pause
-            </button>
-          )}
-        </>
-      )}
-
       <button
         className="btn btn-ghost btn-sm"
         onClick={() => setShowSettings(true)}
