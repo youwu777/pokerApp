@@ -301,6 +301,14 @@ export class PokerGame {
             this.runOutBoard();
             return this.endHand();
         }
+        
+        // If only one player can act, skip to showdown (no point in betting with no one to bet against)
+        if (playersCanAct.length === 1) {
+            console.log(`[DEBUG] Only one player can act (${playersCanAct[0].nickname}), skipping to showdown`);
+            // Run out remaining streets
+            this.runOutBoard();
+            return this.endHand();
+        }
 
         // Deal next street
         switch (this.currentStreet) {
