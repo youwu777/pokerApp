@@ -18,6 +18,8 @@ export class Room {
         this.handCount = 0;
         this.chatHistory = [];
         this.scoreboard = new Map(); // Track all players who have played (socketId -> player stats)
+        this.pendingBuyIns = new Map(); // Track pending buy-in requests (requestId -> {playerId, nickname, amount, timestamp})
+        this.approvedBuyIns = new Map(); // Track approved buy-ins to be added at next hand (playerId -> amount)
     }
 
     addPlayer(player) {

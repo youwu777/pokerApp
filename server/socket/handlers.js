@@ -195,21 +195,13 @@ export function setupSocketHandlers(io, socket) {
         
         // Check if betting round still exists (hand might have ended)
         const roundComplete = room.game.bettingRound ? room.game.bettingRound.isComplete() : 'N/A (hand ended)';
-        console.log(`[ACTION] Success: ${result.action}, Round complete: ${roundComplete}`);
+        console.log(`[ACTION] Success: ${result.action}, Round complete: ${roundComplete}, Has showdownResults: ${!!result.showdownResults}`);
 
-        // Broadcast action
-        io.to(room.id).emit('player-acted', {
-            playerId: socket.id,
-            action: result.action,
-            amount: player.currentBet,
-            gameState: room.game.toJSON(),
-            roomState: room.toJSON()
-        });
-
-        // Check if hand ended with showdown results (this happens in processAction when betting round completes)
+        // Check if hand ended with showdown results BEFORE broadcasting action
+        // This ensures hand-complete is sent first and frontend knows hand is over
         if (result.showdownResults) {
-            console.log('[DEBUG] Emitting hand-complete with results');
-
+            console.log('[DEBUG] Hand ended with showdown results, emitting hand-complete FIRST');
+            
             // Send hand-complete with current game state (so frontend can show final chips)
             io.to(room.id).emit('hand-complete', {
                 results: result.showdownResults,
@@ -287,8 +279,128 @@ export function setupSocketHandlers(io, socket) {
                 }
             }, 5000);
 
-            return;
+            return; // Don't broadcast player-acted or continue game flow - hand is over
         }
+
+        // Check if this is an all-in showdown that needs progressive card reveal
+        if (result.cardsToReveal && result.allInShowdown) {
+            console.log(`[ALL-IN] Starting progressive card reveal: ${result.cardsToReveal.length} cards`);
+            
+            // Broadcast action first (cards are NOT in communityCards yet)
+            io.to(room.id).emit('player-acted', {
+                playerId: socket.id,
+                action: result.action,
+                amount: player.currentBet,
+                gameState: room.game.toJSON(),
+                roomState: room.toJSON()
+            });
+            
+            // Get current community cards count (before revealing new ones)
+            const cardsBeforeReveal = room.game.communityCards.length;
+            const cardsToReveal = result.cardsToReveal;
+            
+            // Start revealing cards one by one with 3 second delays
+            cardsToReveal.forEach((card, index) => {
+                setTimeout(() => {
+                    const currentRoom = roomManager.getRoom(room.id);
+                    if (!currentRoom || !currentRoom.game) return;
+                    
+                    // Add card to community cards as it's revealed
+                    currentRoom.game.addCommunityCard(card);
+                    
+                    // Emit card reveal event
+                    io.to(room.id).emit('card-reveal', {
+                        card: card,
+                        cardIndex: cardsBeforeReveal + index,
+                        gameState: currentRoom.game.toJSON(),
+                        roomState: currentRoom.toJSON()
+                    });
+                    
+                    console.log(`[ALL-IN] Revealed card ${index + 1}/${cardsToReveal.length}: ${card}`);
+                    
+                    // After last card, end the hand
+                    if (index === cardsToReveal.length - 1) {
+                        setTimeout(() => {
+                            const finalRoom = roomManager.getRoom(room.id);
+                            if (!finalRoom || !finalRoom.game) return;
+                            
+                            const showdownResults = finalRoom.game.endHand();
+                            console.log('[DEBUG] All-in showdown complete, emitting hand-complete');
+                            
+                            io.to(room.id).emit('hand-complete', {
+                                results: showdownResults,
+                                roomState: finalRoom.toJSON()
+                            });
+                            
+                            // Auto-start next hand after 5 seconds
+                            setTimeout(() => {
+                                try {
+                                    const currentRoom = roomManager.getRoom(room.id);
+                                    if (!currentRoom) return;
+
+                                    // Process stand up requests and auto-stand-up players with 0 stack
+                                    for (const player of currentRoom.players) {
+                                        if (player.seatNumber !== null && player.stack === 0) {
+                                            console.log(`[AUTO-STANDUP] ${player.nickname} forced to stand up (0 stack)`);
+                                            player.standUp();
+                                            if (currentRoom.scoreboard.has(player.socketId)) {
+                                                const stats = currentRoom.scoreboard.get(player.socketId);
+                                                stats.stack = player.stack;
+                                            }
+                                        } else if (player.standUpNextHand) {
+                                            console.log(`[DEBUG] ${player.nickname} standing up before next hand`);
+                                            player.standUp();
+                                            if (currentRoom.scoreboard.has(player.socketId)) {
+                                                const stats = currentRoom.scoreboard.get(player.socketId);
+                                                stats.stack = player.stack;
+                                            }
+                                        }
+                                    }
+
+                                    io.to(currentRoom.id).emit('room-state', currentRoom.toJSON());
+
+                                    const seatedPlayers = currentRoom.getSeatedPlayers();
+                                    if (seatedPlayers.length < 2) {
+                                        currentRoom.game = null;
+                                        io.to(currentRoom.id).emit('room-state', currentRoom.toJSON());
+                                        return;
+                                    }
+
+                                    const newGameState = currentRoom.game.startNewHand();
+
+                                    for (const player of currentRoom.game.players) {
+                                        io.to(player.socketId).emit('deal-cards', {
+                                            holeCards: player.holeCards
+                                        });
+                                    }
+
+                                    io.to(currentRoom.id).emit('new-hand', {
+                                        gameState: newGameState,
+                                        roomState: currentRoom.toJSON()
+                                    });
+
+                                    startPlayerTimer(io, currentRoom);
+                                } catch (error) {
+                                    console.error('[ERROR] Auto-start failed after all-in:', error);
+                                    io.to(room.id).emit('error', { message: 'Failed to start next hand' });
+                                }
+                            }, 5000);
+                        }, 3000); // Wait 3 seconds after last card before ending hand
+                    }
+                }, index * 3000); // 3 second delay between each card
+            });
+            
+            return; // Don't continue normal flow
+        }
+
+        // Broadcast action (only if hand didn't end)
+        io.to(room.id).emit('player-acted', {
+            playerId: socket.id,
+            action: result.action,
+            amount: player.currentBet,
+            gameState: room.game.toJSON(),
+            roomState: room.toJSON()
+        });
 
         // Check for Run It Twice opportunity
         if (RunItTwice.isApplicable(room.game)) {
@@ -351,6 +463,139 @@ export function setupSocketHandlers(io, socket) {
                 });
             }
         }
+    });
+
+    // Buy-in request
+    socket.on('buyin-request', ({ amount }) => {
+        const room = roomManager.getRoomBySocketId(socket.id);
+        if (!room) return;
+
+        const player = room.getPlayer(socket.id);
+        if (!player) {
+            socket.emit('error', { message: 'Player not found' });
+            return;
+        }
+
+        // Allow owners to request buy-ins too
+
+        const buyinAmount = Number.parseInt(amount, 10);
+        if (Number.isNaN(buyinAmount) || buyinAmount <= 0) {
+            socket.emit('error', { message: 'Invalid buy-in amount' });
+            return;
+        }
+
+        // Generate unique request ID
+        const requestId = `${socket.id}-${Date.now()}`;
+        
+        // Store pending buy-in request
+        room.pendingBuyIns.set(requestId, {
+            requestId,
+            playerId: socket.id,
+            nickname: player.nickname,
+            amount: buyinAmount,
+            timestamp: Date.now()
+        });
+
+        console.log(`[BUYIN] ${player.nickname} requested buy-in of $${buyinAmount}`);
+
+        // Notify owner
+        const hostSocket = io.sockets.sockets.get(room.hostSocketId);
+        if (hostSocket) {
+            hostSocket.emit('buyin-request-notification', {
+                requestId,
+                playerId: socket.id,
+                nickname: player.nickname,
+                amount: buyinAmount
+            });
+        }
+
+        // Confirm to player
+        socket.emit('buyin-request-sent', {
+            requestId,
+            amount: buyinAmount,
+            status: 'pending'
+        });
+    });
+
+    // Buy-in approve
+    socket.on('buyin-approve', ({ requestId }) => {
+        const room = roomManager.getRoomBySocketId(socket.id);
+        if (!room) return;
+
+        // Check if requester is owner
+        if (!room.isHost(socket.id)) {
+            socket.emit('error', { message: 'Only room owner can approve buy-ins' });
+            return;
+        }
+
+        const request = room.pendingBuyIns.get(requestId);
+        if (!request) {
+            socket.emit('error', { message: 'Buy-in request not found' });
+            return;
+        }
+
+        const player = room.getPlayer(request.playerId);
+        if (!player) {
+            socket.emit('error', { message: 'Player not found' });
+            room.pendingBuyIns.delete(requestId);
+            return;
+        }
+
+        // Remove from pending and add to approved (to be processed at next hand)
+        room.pendingBuyIns.delete(requestId);
+        
+        // Add to approved buy-ins (accumulate if player already has approved buy-in)
+        const existingApproved = room.approvedBuyIns.get(request.playerId) || 0;
+        room.approvedBuyIns.set(request.playerId, existingApproved + request.amount);
+
+        console.log(`[BUYIN] Owner approved ${request.nickname}'s buy-in of $${request.amount}`);
+
+        // Notify player
+        const playerSocket = io.sockets.sockets.get(request.playerId);
+        if (playerSocket) {
+            playerSocket.emit('buyin-approved', {
+                requestId,
+                amount: request.amount
+            });
+        }
+
+        // Confirm to owner
+        socket.emit('buyin-approve-success', { requestId });
+    });
+
+    // Buy-in reject
+    socket.on('buyin-reject', ({ requestId }) => {
+        const room = roomManager.getRoomBySocketId(socket.id);
+        if (!room) return;
+
+        // Check if requester is owner
+        if (!room.isHost(socket.id)) {
+            socket.emit('error', { message: 'Only room owner can reject buy-ins' });
+            return;
+        }
+
+        const request = room.pendingBuyIns.get(requestId);
+        if (!request) {
+            socket.emit('error', { message: 'Buy-in request not found' });
+            return;
+        }
+
+        // Remove from pending
+        room.pendingBuyIns.delete(requestId);
+
+        console.log(`[BUYIN] Owner rejected ${request.nickname}'s buy-in of $${request.amount}`);
+
+        // Notify player
+        const playerSocket = io.sockets.sockets.get(request.playerId);
+        if (playerSocket) {
+            playerSocket.emit('buyin-rejected', {
+                requestId,
+                amount: request.amount
+            });
+        }
+
+        // Confirm to owner
+        socket.emit('buyin-reject-success', { requestId });
     });
 
     // Rabbit hunt

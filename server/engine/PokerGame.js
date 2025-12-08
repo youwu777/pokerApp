@@ -110,6 +110,54 @@ export class PokerGame {
             throw new Error('Need at least 2 players to start');
         }
 
+        // Process approved buy-ins before resetting players
+        this.room.approvedBuyIns.forEach((amount, playerId) => {
+            const player = this.players.find(p => p.socketId === playerId);
+            if (player) {
+                console.log(`[BUYIN] Adding $${amount} to ${player.nickname}'s stack (was ${player.stack}) and chips (was ${player.chips})`);
+                player.stack += amount;
+                player.buyin += amount; // Update total buy-in amount
+                // If player is already seated, also update their chips (what's displayed/used in game)
+                if (player.seatNumber !== null) {
+                    player.chips += amount;
+                    console.log(`[BUYIN] Updated ${player.nickname}'s chips to ${player.chips}`);
+                }
+                // Update scoreboard
+                if (this.room.scoreboard.has(playerId)) {
+                    const stats = this.room.scoreboard.get(playerId);
+                    stats.buyin = player.buyin;
+                    stats.stack = player.stack;
+                }
+            } else {
+                // Player not in current hand (not seated), but still update their stack for when they sit
+                const allPlayer = this.room.getPlayer(playerId);
+                if (allPlayer) {
+                    console.log(`[BUYIN] Adding $${amount} to ${allPlayer.nickname}'s stack (player not in current hand, was ${allPlayer.stack})`);
+                    allPlayer.stack += amount;
+                    allPlayer.buyin += amount;
+                    // Update scoreboard
+                    if (this.room.scoreboard.has(playerId)) {
+                        const stats = this.room.scoreboard.get(playerId);
+                        stats.buyin = allPlayer.buyin;
+                        stats.stack = allPlayer.stack;
+                    }
+                }
+            }
+        });
+        // Clear approved buy-ins after processing
+        this.room.approvedBuyIns.clear();
+
+        // Ensure chips are synced with stack for all seated players (after buy-ins processed)
+        this.players.forEach(player => {
+            if (player.seatNumber !== null) {
+                // If chips don't match stack, sync them (buy-ins should have updated both, but safety check)
+                if (player.chips !== player.stack) {
+                    console.log(`[BUYIN] Syncing chips with stack for ${player.nickname}: chips=${player.chips}, stack=${player.stack}`);
+                    player.chips = player.stack;
+                }
+            }
+        });
+
         // Reset players for new hand
         this.players.forEach(p => p.resetForNewHand());
 
@@ -246,11 +294,49 @@ export class PokerGame {
             }
         }
 
-        if (result.success && this.bettingRound.isComplete()) {
-            const showdownResults = this.advanceStreet();
-            if (showdownResults) {
-                console.log('[DEBUG] Showdown results:', showdownResults);
-                result.showdownResults = showdownResults;
+        // Check if fold ended the hand (only one player remaining)
+        if (result.success && result.handEnded) {
+            console.log('[DEBUG] Fold ended the hand, only one player remaining');
+            // Collect bets from ALL players in the game (including folded ones) before ending hand
+            // This ensures all bets from current and previous rounds are included
+            let totalCollected = 0;
+            for (const player of this.players) {
+                if (player.currentBet > 0) {
+                    const betAmount = player.currentBet;
+                    totalCollected += betAmount;
+                    player.currentBet = 0; // Reset after collecting
+                    console.log(`[DEBUG] Collected ${betAmount} from ${player.nickname} (status: ${player.status})`);
+                }
+            }
+            this.pot += totalCollected;
+            console.log(`[DEBUG] Collected ${totalCollected} from all players, total pot: ${this.pot}`);
+            
+            const showdownResults = this.endHand();
+            result.showdownResults = showdownResults;
+            this.bettingRound = null;
+            return result;
+        }
+
+        if (result.success && this.bettingRound && this.bettingRound.isComplete()) {
+            console.log('[DEBUG] Betting round complete, advancing street...');
+            const advanceResult = this.advanceStreet();
+            if (advanceResult) {
+                // Check if this is an all-in showdown with cards to reveal progressively
+                if (advanceResult.cardsToReveal && advanceResult.allInShowdown) {
+                    console.log('[DEBUG] All-in showdown, cards will be revealed progressively');
+                    result.cardsToReveal = advanceResult.cardsToReveal;
+                    result.allInShowdown = true;
+                    // Don't end hand yet - wait for cards to be revealed
+                    // The socket handler will manage the progressive reveal
+                } else {
+                    // Normal showdown results
+                    console.log('[DEBUG] Showdown results from advanceStreet:', advanceResult);
+                    result.showdownResults = advanceResult;
+                    // Clear betting round when hand ends
+                    this.bettingRound = null;
+                }
+            } else {
+                console.log('[DEBUG] advanceStreet returned null, hand continues to next street');
             }
         }
 
@@ -297,17 +383,20 @@ export class PokerGame {
         // Check if all remaining players are all-in
         const playersCanAct = activePlayers.filter(p => p.status === 'active');
         if (playersCanAct.length === 0) {
-            // Run out remaining streets
-            this.runOutBoard();
-            return this.endHand();
+            // Run out remaining streets - cards will be revealed progressively
+            const cardsToReveal = this.runOutBoard();
+            // Add all cards immediately for endHand calculation, but return special flag
+            // The actual reveal will be handled by the socket handler
+            return { cardsToReveal, allInShowdown: true };
         }
         
         // If only one player can act, skip to showdown (no point in betting with no one to bet against)
         if (playersCanAct.length === 1) {
             console.log(`[DEBUG] Only one player can act (${playersCanAct[0].nickname}), skipping to showdown`);
-            // Run out remaining streets
-            this.runOutBoard();
-            return this.endHand();
+            // Run out remaining streets - cards will be revealed progressively
+            const cardsToReveal = this.runOutBoard();
+            // Add all cards immediately for endHand calculation, but return special flag
+            return { cardsToReveal, allInShowdown: true };
         }
 
         // Deal next street
@@ -389,12 +478,52 @@ export class PokerGame {
 
     /**
      * Run out remaining board cards when all players are all-in
+     * Returns the cards that need to be revealed (for progressive reveal)
+     * For all-in showdowns, cards are NOT added to communityCards immediately
+     * They will be added progressively as they're revealed
      */
     runOutBoard() {
-        while (this.communityCards.length < 5) {
-            this.deck.pop(); // Burn card
-            this.communityCards.push(this.deck.pop());
+        const cardsToReveal = [];
+        const cardsNeeded = 5 - this.communityCards.length;
+        
+        // Safety check: ensure we have enough cards in deck
+        if (this.deck.length < cardsNeeded * 2) {
+            console.error(`[ERROR] Not enough cards in deck! Need ${cardsNeeded * 2}, have ${this.deck.length}`);
+            // Add cards immediately if deck is insufficient (fallback)
+            while (this.communityCards.length < 5 && this.deck.length >= 2) {
+                this.deck.pop(); // Burn card
+                const card = this.deck.pop();
+                if (card) {
+                    this.communityCards.push(card);
+                }
+            }
+            return []; // Return empty array - cards already added
         }
+        
+        // Pop cards but don't add to communityCards yet
+        for (let i = 0; i < cardsNeeded; i++) {
+            if (this.deck.length < 2) {
+                console.error(`[ERROR] Deck ran out of cards during runOutBoard!`);
+                break;
+            }
+            this.deck.pop(); // Burn card
+            const card = this.deck.pop();
+            if (card) {
+                cardsToReveal.push(card);
+            } else {
+                console.error(`[ERROR] Popped undefined card from deck!`);
+                break;
+            }
+        }
+        
+        return cardsToReveal;
+    }
+    
+    /**
+     * Add a card to community cards (used for progressive reveal)
+     */
+    addCommunityCard(card) {
+        this.communityCards.push(card);
     }
 
     /**

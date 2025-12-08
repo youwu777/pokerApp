@@ -5,6 +5,9 @@ import PokerTable from './PokerTable'
 import ActionPanel from './ActionPanel'
 import Chat from './Chat'
 import HostControls from './HostControls'
+import BuyInRequest from './BuyInRequest'
+import BuyInNotification from './BuyInNotification'
+import ScoreBoard from './ScoreBoard'
 import './PokerRoom.css'
 
 export default function PokerRoom() {
@@ -23,6 +26,7 @@ export default function PokerRoom() {
     const [timerState, setTimerState] = useState(null)
     const [error, setError] = useState(null)
     const [roomNotFound, setRoomNotFound] = useState(false)
+    const [visibleCommunityCards, setVisibleCommunityCards] = useState([])
 
     useEffect(() => {
         if (!socket) return
@@ -36,6 +40,10 @@ export default function PokerRoom() {
 
         socket.on('room-state', (state) => {
             setRoomState(state)
+            // Update visible community cards if game state exists
+            if (state?.gameState?.communityCards) {
+                setVisibleCommunityCards(state.gameState.communityCards)
+            }
         })
 
         socket.on('player-joined', ({ player }) => {
@@ -55,13 +63,33 @@ export default function PokerRoom() {
         socket.on('new-hand', ({ gameState, roomState }) => {
             setRoomState(roomState)
             setShowdownHands([]) // Clear showdown hands
+            setVisibleCommunityCards([]) // Reset visible community cards
             // Cards will be set by deal-cards event
         })
 
         socket.on('player-acted', ({ playerId, action, gameState, roomState }) => {
             setRoomState(roomState)
+            // Update visible community cards to match game state
+            if (gameState && gameState.communityCards) {
+                setVisibleCommunityCards(gameState.communityCards)
+            }
             // Clear timer state when player acts (will be updated by next timer-tick or cleared)
             setTimerState(null)
+        })
+
+        socket.on('card-reveal', ({ card, cardIndex, gameState, roomState }) => {
+            console.log(`Card revealed: ${card} at index ${cardIndex}`)
+            setRoomState(roomState)
+            // Update visible community cards progressively
+            setVisibleCommunityCards(prev => {
+                const newCards = [...prev]
+                // Ensure we have enough slots
+                while (newCards.length <= cardIndex) {
+                    newCards.push(null)
+                }
+                newCards[cardIndex] = card
+                return newCards
+            })
         })
 
         socket.on('timer-tick', (data) => {
@@ -77,6 +105,10 @@ export default function PokerRoom() {
             setRoomState(roomState)
             setHoleCards([]) // Clear cards after hand ends
             setTimerState(null) // Clear timer
+            // Update visible community cards to show all cards
+            if (roomState?.gameState?.communityCards) {
+                setVisibleCommunityCards(roomState.gameState.communityCards)
+            }
             if (results.revealedHands) {
                 setShowdownHands(results.revealedHands)
             }
@@ -254,14 +286,26 @@ export default function PokerRoom() {
 
                 <div className="room-controls">
                     {myPlayer && myPlayer.seatNumber !== null && (
-                        <button
-                            className={myPlayer.standUpNextHand ? "btn btn-secondary btn-sm" : "btn btn-outline-danger btn-sm"}
-                            onClick={handleStandUp}
-                            style={{ marginRight: '10px' }}
-                            disabled={myPlayer.standUpNextHand && !roomState.gameState}
-                        >
-                            {myPlayer.standUpNextHand ? "Leave Next Hand" : "Leave Seat"}
-                        </button>
+                        <>
+                            <button
+                                className={myPlayer.standUpNextHand ? "btn btn-secondary btn-sm" : "btn btn-outline-danger btn-sm"}
+                                onClick={handleStandUp}
+                                style={{ marginRight: '10px' }}
+                                disabled={myPlayer.standUpNextHand && !roomState.gameState}
+                            >
+                                {myPlayer.standUpNextHand ? "Leave Next Hand" : "Leave Seat"}
+                            </button>
+                            <BuyInRequest
+                                socket={socket}
+                                isHost={isHost}
+                                myPlayer={myPlayer}
+                            />
+                        </>
+                    )}
+                    {roomState && (
+                        <ScoreBoard 
+                            players={roomState.scoreboard || roomState.players} 
+                        />
                     )}
                     {isHost && (
                         <HostControls
@@ -272,6 +316,8 @@ export default function PokerRoom() {
                 </div>
             </div>
 
+            <BuyInNotification socket={socket} isHost={isHost} />
+            
             <div className="room-content">
                 <div className="sidebar">
                     <Chat socket={socket} roomId={roomId} />
@@ -279,6 +325,7 @@ export default function PokerRoom() {
 
                 <div className="table-container">
                     <PokerTable
+                        visibleCommunityCards={visibleCommunityCards.length > 0 ? visibleCommunityCards : undefined}
                         roomState={roomState}
                         myPlayer={myPlayer}
                         holeCards={holeCards}

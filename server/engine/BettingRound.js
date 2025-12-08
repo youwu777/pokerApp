@@ -42,6 +42,16 @@ export class BettingRound {
         switch (action) {
             case 'fold':
                 player.fold();
+                // Check if only one active player remains after fold
+                const remainingActivePlayers = this.players.filter(p => p.status === 'active');
+                if (remainingActivePlayers.length === 1) {
+                    // Only one player left, round is complete - hand should end immediately
+                    console.log(`[BETTING] Player ${player.nickname} folded, only one active player remaining - hand ends`);
+                    player.hasActed = true; // Mark as acted so isComplete() returns true
+                    // Don't move to next player - hand is over
+                    return { success: true, action: 'fold', handEnded: true };
+                }
+                // Normal fold - continue with normal flow
                 break;
 
             case 'check':

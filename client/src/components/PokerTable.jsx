@@ -10,10 +10,16 @@ export default function PokerTable({
     timerState,
     onSitDown,
     onStandUp,
-    onPlayerAction
+    onPlayerAction,
+    visibleCommunityCards
 }) {
     const gameState = roomState?.gameState
     const players = roomState?.players || []
+    
+    // Use visibleCommunityCards if provided (for progressive reveal), otherwise use gameState.communityCards
+    const communityCards = visibleCommunityCards && visibleCommunityCards.length > 0 
+        ? visibleCommunityCards.filter(card => card !== null)
+        : (gameState?.communityCards || [])
 
     // Arrange players in seats (0-9)
     const seats = Array(10).fill(null).map((_, index) => {
@@ -34,7 +40,7 @@ export default function PokerTable({
                     {gameState ? (
                         <>
                             <div className="community-cards">
-                                {gameState.communityCards.map((card, i) => (
+                                {communityCards.map((card, i) => (
                                     <PlayingCard key={i} card={card} />
                                 ))}
                             </div>

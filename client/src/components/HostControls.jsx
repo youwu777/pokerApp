@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import GameSettings from './GameSettings'
-import ScoreBoard from './ScoreBoard'
 import './HostControls.css'
 
 export default function HostControls({ roomState, socket }) {
@@ -63,10 +62,6 @@ export default function HostControls({ roomState, socket }) {
           )}
         </>
       )}
-
-      <ScoreBoard 
-        players={roomState.scoreboard || roomState.players} 
-      />
 
       <button
         className="btn btn-ghost btn-sm"
