@@ -1,0 +1,380 @@
+.player-seat {
+    position: relative;
+    width: 140px;
+    height: 100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(0, 0, 0, 0.75);
+    border-radius: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+    padding: 6px;
+    box-sizing: border-box;
+}
+
+.player-seat.my-seat {
+    border-color: #60a5fa;
+    background: rgba(37, 99, 235, 0.15);
+}
+
+.player-seat.folded {
+    opacity: 0.5;
+    transform: scale(0.95);
+    filter: grayscale(0.8);
+}
+
+.player-seat.waiting {
+    opacity: 0.7;
+    border-style: dashed;
+}
+
+.player-seat.winner {
+    border-color: #34d399;
+    box-shadow: 0 0 20px rgba(52, 211, 153, 0.6);
+    z-index: 10;
+    transform: scale(1.05);
+}
+
+.waiting-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 10px;
+    z-index: 10;
+}
+
+.waiting-overlay span {
+    font-size: 0.7rem;
+    color: #9ca3af;
+}
+
+.dealer-button {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    width: 20px;
+    height: 20px;
+    background: white;
+    color: black;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.7rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    z-index: 20;
+    border: 1px solid #ccc;
+}
+
+.position-label {
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: #9ca3af;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    z-index: 6;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.player-info {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    z-index: 2;
+    margin-top: auto;
+    padding-bottom: 4px;
+}
+
+.player-name {
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 80px;
+    margin-bottom: 0;
+}
+
+.you-badge {
+    background: #2563eb;
+    color: white;
+    font-size: 0.55rem;
+    padding: 1px 3px;
+    border-radius: 3px;
+    font-weight: bold;
+}
+
+.player-chips {
+    color: #fbbf24;
+    font-size: 0.8rem;
+    font-family: 'Roboto Mono', monospace;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 1px 4px;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+.hole-cards-container {
+    flex: 1;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 2px;
+    margin-bottom: 2px;
+    position: relative;
+    z-index: 5;
+}
+
+.hole-cards {
+    display: flex;
+    gap: 4px;
+}
+
+/* Adjust card size if needed via PlayingCard.css, but here we ensure container fits */
+.playing-card {
+    width: 42px;
+    /* Increased from 36px */
+    height: 58px;
+    /* Increased from 50px */
+}
+
+.mucked-cards {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+    font-size: 0.7rem;
+    color: #9ca3af;
+}
+
+.hand-rank-label {
+    position: absolute;
+    bottom: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #34d399;
+    color: #064e3b;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    white-space: nowrap;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    z-index: 20;
+    animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 1px solid #059669;
+}
+
+.current-bet {
+    position: absolute;
+    top: -25px;
+    /* Move bet above seat */
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.85);
+    padding: 2px 8px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    z-index: 15;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.winner .current-bet {
+    display: none;
+}
+
+.bet-chips {
+    color: #fbbf24;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.player-badges {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    pointer-events: none;
+    z-index: 25;
+    /* Ensure badges are on top of cards */
+}
+
+.badge {
+    font-size: 0.7rem;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    animation: fadeIn 0.2s ease;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.action-badge {
+    background: rgba(0, 0, 0, 0.7);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.all-in-badge {
+    background: #dc2626;
+    color: white;
+    box-shadow: 0 0 10px rgba(220, 38, 38, 0.5);
+    border: 1px solid #ef4444;
+}
+
+.stand-up-badge {
+    background: #f59e0b;
+    color: black;
+}
+
+.btn-stand-up {
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #ef4444;
+    color: white;
+    border: 2px solid #1f2937;
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    z-index: 30;
+    transition: all 0.2s;
+    opacity: 0;
+    /* Hidden by default */
+}
+
+.player-seat:hover .btn-stand-up,
+.btn-stand-up.active {
+    opacity: 1;
+}
+
+.btn-stand-up:hover {
+    transform: scale(1.1);
+    background: #dc2626;
+}
+
+.btn-stand-up.active {
+    background: #f59e0b;
+    color: black;
+}
+
+.empty-seat {
+    border-style: dashed;
+    background: rgba(255, 255, 255, 0.05);
+    justify-content: center;
+}
+
+.empty-seat:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.empty-seat.disabled {
+    opacity: 0.3;
+    pointer-events: none;
+    border-color: transparent;
+}
+
+.seat-timer-container {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    z-index: 1;
+    overflow: hidden;
+    border-radius: 0 0 12px 12px;
+}
+
+.seat-timer-bar {
+    height: 100%;
+    background: #3b82f6;
+    /* Blue default */
+    transition: width 1s linear, background-color 0.3s ease;
+}
+
+.seat-timer-bar.low-time {
+    background: #ef4444;
+    /* Red warning */
+    animation: pulse-red 1s infinite;
+}
+
+.seat-timer-bar.time-bank {
+    background: #f59e0b;
+    /* Amber for time bank */
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes popIn {
+    from {
+        opacity: 0;
+        transform: scale(0.5) translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+@keyframes pulse-red {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}

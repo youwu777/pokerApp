@@ -1,0 +1,321 @@
+import { BettingRound } from './BettingRound.js';
+import { HandEvaluator } from './HandEvaluator.js';
+
+export class PokerGame {
+    constructor(room) {
+        this.room = room;
+        this.deck = [];
+        this.communityCards = [];
+        this.pot = 0;
+        this.sidePots = [];
+        this.dealerPosition = 0;
+        this.currentStreet = null; // preflop, flop, turn, river, showdown
+        this.bettingRound = null;
+        this.players = [];
+    }
+
+    /**
+     * Start a new hand
+     */
+    startNewHand() {
+        this.players = this.room.getSeatedPlayers();
+
+        if (this.players.length < 2) {
+            throw new Error('Need at least 2 players to start');
+        }
+
+        // Reset players for new hand
+        this.players.forEach(p => p.resetForNewHand());
+
+        // Initialize deck and shuffle
+        this.deck = this.createDeck();
+        this.shuffleDeck();
+
+        this.communityCards = [];
+        this.pot = 0;
+        this.sidePots = [];
+        this.currentStreet = 'preflop';
+
+        // Move dealer button
+        this.dealerPosition = (this.dealerPosition + 1) % this.players.length;
+
+        // Post blinds
+        this.postBlinds();
+
+        // Deal hole cards
+        this.dealHoleCards();
+
+        // Start preflop betting
+        this.bettingRound = new BettingRound(
+            this.players,
+            this.room.settings.smallBlind,
+            this.room.settings.bigBlind
+        );
+
+        // First to act is left of big blind
+        const bbPosition = (this.dealerPosition + 2) % this.players.length;
+        this.bettingRound.currentPlayerIndex = (bbPosition + 1) % this.players.length;
+
+        return this.toJSON();
+    }
+
+    /**
+     * Create a standard 52-card deck
+     */
+    createDeck() {
+        const suits = ['h', 'd', 'c', 's'];
+        const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A'];
+        const deck = [];
+
+        for (const suit of suits) {
+            for (const rank of ranks) {
+                deck.push(rank + suit);
+            }
+        }
+
+        return deck;
+    }
+
+    /**
+     * Shuffle the deck using Fisher-Yates algorithm
+     */
+    shuffleDeck() {
+        for (let i = this.deck.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [this.deck[i], this.deck[j]] = [this.deck[j], this.deck[i]];
+        }
+    }
+
+    /**
+     * Post small and big blinds
+     */
+    postBlinds() {
+        const sbPosition = (this.dealerPosition + 1) % this.players.length;
+        const bbPosition = (this.dealerPosition + 2) % this.players.length;
+
+        const sbPlayer = this.players[sbPosition];
+        const bbPlayer = this.players[bbPosition];
+
+        sbPlayer.bet(this.room.settings.smallBlind);
+        sbPlayer.lastAction = 'small blind';
+
+        bbPlayer.bet(this.room.settings.bigBlind);
+        bbPlayer.lastAction = 'big blind';
+    }
+
+    /**
+     * Deal 2 hole cards to each player
+     */
+    dealHoleCards() {
+        for (let i = 0; i < 2; i++) {
+            for (const player of this.players) {
+                if (player.status !== 'folded') {
+                    player.holeCards.push(this.deck.pop());
+                }
+            }
+        }
+    }
+
+    /**
+     * Process player action
+     */
+    processAction(player, action, amount) {
+        if (!this.bettingRound) {
+            return { success: false, message: 'No active betting round' };
+        }
+
+        const result = this.bettingRound.processAction(player, action, amount);
+
+        if (result.success && this.bettingRound.isComplete()) {
+            const showdownResults = this.advanceStreet();
+            if (showdownResults) {
+                console.log('[DEBUG] Showdown results:', showdownResults);
+                result.showdownResults = showdownResults;
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Advance to next street (flop, turn, river, showdown)
+     * @returns {Object|null} Results if hand ended, null otherwise
+     */
+    advanceStreet() {
+        console.log(`[DEBUG] advanceStreet called, currentStreet: ${this.currentStreet}`);
+
+        // Collect bets from previous round
+        this.pot += this.bettingRound.collectBets();
+
+        // Reset players for new betting round
+        this.players.forEach(p => {
+            if (p.status !== 'folded' && p.status !== 'all-in') {
+                p.resetForNewRound();
+            }
+        });
+
+        const activePlayers = this.players.filter(p => p.status !== 'folded');
+
+        // Check if only one player remains
+        if (activePlayers.length === 1) {
+            return this.endHand();
+        }
+
+        // Check if all remaining players are all-in
+        const playersCanAct = activePlayers.filter(p => p.status === 'active');
+        if (playersCanAct.length === 0) {
+            // Run out remaining streets
+            this.runOutBoard();
+            return this.endHand();
+        }
+
+        // Deal next street
+        switch (this.currentStreet) {
+            case 'preflop':
+                this.dealFlop();
+                this.currentStreet = 'flop';
+                break;
+            case 'flop':
+                this.dealTurn();
+                this.currentStreet = 'turn';
+                break;
+            case 'turn':
+                this.dealRiver();
+                this.currentStreet = 'river';
+                break;
+            case 'river':
+                console.log('[DEBUG] River complete, ending hand');
+                return this.endHand();
+        }
+
+        // Start new betting round
+        this.bettingRound = new BettingRound(
+            activePlayers,
+            this.room.settings.smallBlind,
+            this.room.settings.bigBlind,
+            0 // Post-flop betting starts at 0
+        );
+
+        // First to act is left of dealer
+        this.bettingRound.currentPlayerIndex = (this.dealerPosition + 1) % activePlayers.length;
+
+        return null; // Hand continues
+    }
+
+    dealFlop() {
+        this.deck.pop(); // Burn card
+        this.communityCards.push(this.deck.pop());
+        this.communityCards.push(this.deck.pop());
+        this.communityCards.push(this.deck.pop());
+    }
+
+    dealTurn() {
+        this.deck.pop(); // Burn card
+        this.communityCards.push(this.deck.pop());
+    }
+
+    dealRiver() {
+        this.deck.pop(); // Burn card
+        this.communityCards.push(this.deck.pop());
+    }
+
+    /**
+     * Run out remaining board cards when all players are all-in
+     */
+    runOutBoard() {
+        while (this.communityCards.length < 5) {
+            this.deck.pop(); // Burn card
+            this.communityCards.push(this.deck.pop());
+        }
+    }
+
+    /**
+     * End hand and award pot
+     */
+    endHand() {
+        this.currentStreet = 'showdown';
+
+        const activePlayers = this.players.filter(p => p.status !== 'folded');
+
+        // Single winner (everyone else folded)
+        if (activePlayers.length === 1) {
+            activePlayers[0].chips += this.pot;
+            this.room.handCount++;
+            return {
+                winners: [activePlayers[0]],
+                pot: this.pot,
+                winningHand: null
+            };
+        }
+
+        // Calculate side pots if needed
+        this.calculateSidePots();
+
+        // Evaluate hands and determine winners
+        const results = this.awardPots();
+        this.room.handCount++;
+
+        return results;
+    }
+
+    /**
+     * Calculate side pots for all-in situations
+     */
+    calculateSidePots() {
+        const players = this.players.filter(p => p.status !== 'folded');
+
+        // Sort players by total contribution (current bet)
+        const sorted = [...players].sort((a, b) => a.currentBet - b.currentBet);
+
+        this.sidePots = [];
+        let remainingPot = this.pot;
+
+        for (let i = 0; i < sorted.length; i++) {
+            const player = sorted[i];
+            const eligiblePlayers = sorted.slice(i);
+
+            if (eligiblePlayers.length === 0) break;
+
+            const potSize = player.currentBet * eligiblePlayers.length;
+
+            if (potSize > 0) {
+                this.sidePots.push({
+                    amount: Math.min(potSize, remainingPot),
+                    eligiblePlayers: eligiblePlayers
+        const results = [];
+
+                    for(const sidePot of this.sidePots) {
+                    const playerHands = sidePot.eligiblePlayers.map(player => ({
+                        player,
+                        hand: HandEvaluator.evaluateHand(player.holeCards, this.communityCards)
+                    }));
+
+                    const winners = HandEvaluator.determineWinners(playerHands);
+                    const sharePerWinner = Math.floor(sidePot.amount / winners.length);
+
+                    for (const winner of winners) {
+                        winner.chips += sharePerWinner;
+                    }
+
+                    results.push({
+                        winners,
+                        pot: sidePot.amount,
+                        winningHand: playerHands.find(ph => ph.player === winners[0])?.hand
+                    });
+                }
+
+                return results;
+            }
+
+            toJSON() {
+                return {
+                    communityCards: this.communityCards,
+                    pot: this.pot,
+                    currentStreet: this.currentStreet,
+                    dealerPosition: this.dealerPosition,
+                    currentPlayer: this.bettingRound?.getCurrentPlayer()?.socketId || null,
+                    currentBet: this.bettingRound?.currentBet || 0,
+                    minRaise: this.bettingRound?.minRaise || 0
+                };
+            }
+        }

@@ -1,0 +1,134 @@
+.action-panel {
+    background: var(--gradient-surface);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: var(--radius-xl);
+    padding: var(--space-lg);
+    box-shadow: var(--shadow-lg);
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.action-panel.disabled {
+    opacity: 0.6;
+}
+
+.waiting-message {
+    text-align: center;
+    color: var(--color-text-muted);
+    font-size: 1rem;
+    padding: var(--space-md);
+}
+
+.action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    margin-bottom: var(--space-md);
+}
+
+.action-buttons .btn {
+    width: 100%;
+    min-height: 50px;
+    font-size: 1rem;
+}
+
+.raise-controls {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    padding-top: var(--space-md);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.raise-slider {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.raise-slider input[type="range"] {
+    width: 100%;
+}
+
+.slider {
+    flex: 1;
+    height: 8px;
+    border-radius: var(--radius-full);
+    background: var(--color-surface-light);
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--gradient-gold);
+    cursor: pointer;
+    box-shadow: var(--shadow-md);
+}
+
+.slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--gradient-gold);
+    cursor: pointer;
+    border: none;
+    box-shadow: var(--shadow-md);
+}
+
+.raise-amount {
+    font-size: 1.25rem;
+    color: var(--color-gold);
+    font-weight: 700;
+    min-width: 100px;
+    text-align: right;
+}
+
+.raise-amount-input {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+}
+
+.currency-symbol {
+    font-size: 1.25rem;
+    color: var(--color-gold);
+    font-weight: 700;
+}
+
+.preset-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.preset-buttons .btn {
+    width: 100%;
+}
+
+@media (max-width: 768px) {
+    .action-panel {
+        padding: var(--space-md);
+    }
+
+    .action-buttons {
+        gap: var(--space-sm);
+    }
+
+    .action-buttons .btn {
+        min-width: 80px;
+        font-size: 0.9rem;
+        padding: var(--space-sm);
+    }
+
+    .preset-buttons {
+        flex-wrap: wrap;
+    }
+}

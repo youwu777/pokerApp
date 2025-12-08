@@ -1,0 +1,244 @@
+.poker-table-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-xl);
+    width: 100%;
+    max-width: 1200px;
+}
+
+.poker-table {
+    position: relative;
+    width: 1000px;
+    height: 500px;
+    background: var(--gradient-felt);
+    border: 12px solid var(--color-gold-dark);
+    border-radius: 100px;
+    /* Rectangular with rounded corners */
+    box-shadow:
+        inset 0 0 60px rgba(0, 0, 0, 0.4),
+        var(--shadow-xl),
+        0 0 40px rgba(255, 215, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.table-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-xl);
+    z-index: 1;
+}
+
+.community-cards {
+    display: flex;
+    gap: var(--space-sm);
+    animation: fadeIn 0.4s ease;
+}
+
+/* Override PlayingCard size for community cards */
+.community-cards .playing-card {
+    width: 110px;
+    height: 154px;
+}
+
+.pot-display {
+    text-align: center;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 2px 8px;
+    border-radius: var(--radius-md);
+    border: 1.5px solid var(--color-gold);
+    box-shadow: var(--shadow-glow);
+    margin-top: var(--space-md);
+}
+
+.pot-label {
+    font-size: 0.65rem;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.pot-amount {
+    font-size: 0.95rem;
+    color: var(--color-gold);
+    font-weight: 700;
+}
+
+.waiting-to-start {
+    text-align: center;
+    padding: var(--space-xl);
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: var(--radius-lg);
+    border: 2px dashed rgba(255, 215, 0, 0.3);
+}
+
+.waiting-icon {
+    font-size: 3rem;
+    margin-bottom: var(--space-md);
+    animation: pulse 2s ease infinite;
+}
+
+.waiting-text {
+    font-size: 1.1rem;
+    color: var(--color-text);
+    font-weight: 600;
+}
+
+/* Seat Positions - 4-1-4-1 Layout (Clockwise: 0->1->2...->9) */
+/* 0 starts at Bottom Right and moves Left (Clockwise in poker terms) */
+
+.seat {
+    position: absolute;
+}
+
+/* Bottom Row (4 players) - Right to Left */
+.seat-0 {
+    bottom: -45px;
+    left: 80%;
+    transform: translateX(-50%);
+}
+
+.seat-1 {
+    bottom: -45px;
+    left: 60%;
+    transform: translateX(-50%);
+}
+
+.seat-2 {
+    bottom: -45px;
+    left: 40%;
+    transform: translateX(-50%);
+}
+
+.seat-3 {
+    bottom: -45px;
+    left: 20%;
+    transform: translateX(-50%);
+}
+
+/* Left Side (1 player) */
+.seat-4 {
+    top: 50%;
+    left: -65px;
+    transform: translateY(-50%);
+}
+
+/* Top Row (4 players) - Left to Right */
+.seat-5 {
+    top: -45px;
+    left: 20%;
+    transform: translateX(-50%);
+}
+
+.seat-6 {
+    top: -45px;
+    left: 40%;
+    transform: translateX(-50%);
+}
+
+.seat-7 {
+    top: -45px;
+    left: 60%;
+    transform: translateX(-50%);
+}
+
+.seat-8 {
+    top: -45px;
+    left: 80%;
+    transform: translateX(-50%);
+}
+
+/* Right Side (1 player) */
+.seat-9 {
+    top: 50%;
+    right: -65px;
+    transform: translateY(-50%);
+}
+
+/* Bet Positioning Overrides */
+
+/* Bottom Row (Seats 0-3) - Bet ON TOP */
+.seat-0 .current-bet,
+.seat-1 .current-bet,
+.seat-2 .current-bet,
+.seat-3 .current-bet {
+    top: -35px;
+    bottom: auto;
+}
+
+/* Top Row (Seats 5-8) - Bet UNDER (Default is usually bottom, but let's be explicit) */
+.seat-5 .current-bet,
+.seat-6 .current-bet,
+.seat-7 .current-bet,
+.seat-8 .current-bet {
+    bottom: -35px;
+    top: auto;
+}
+
+/* Left Side (Seat 4) - Bet on RIGHT */
+/* Note: Seat 4 is Left side in previous step's CSS comments, let's verify */
+/* Previous CSS: .seat-4 { left: -65px } -> This is LEFT side. */
+/* User request: "player on left side display on right side" */
+.seat-4 .current-bet {
+    left: 140px;
+    right: auto;
+    top: 50%;
+    bottom: auto;
+    transform: translateY(-50%);
+}
+
+/* Right Side (Seat 9) - Bet on LEFT */
+/* Previous CSS: .seat-9 { right: -65px } -> This is RIGHT side. */
+/* User request: "player on right side display on left side" */
+/* Wait, user said "one on left one on right". */
+/* My previous CSS had Seat 4 on Left and Seat 9 on Right. */
+/* Let's double check the user request vs my implementation. */
+/* Step 1335: Seat 4 is Left, Seat 9 is Right. */
+/* So Seat 4 (Left) -> Bet on Right. */
+/* Seat 9 (Right) -> Bet on Left. */
+
+.seat-9 .current-bet {
+    right: 140px;
+    left: auto;
+    top: 50%;
+    bottom: auto;
+    transform: translateY(-50%);
+}
+
+
+@media (max-width: 1024px) {
+    .poker-table {
+        width: 800px;
+        height: 400px;
+    }
+}
+
+@media (max-width: 768px) {
+    .poker-table {
+        width: 100%;
+        max-width: 500px;
+        height: 300px;
+        border-width: 8px;
+        border-radius: 50px;
+    }
+
+    .pot-amount {
+        font-size: 1.2rem;
+    }
+
+    .waiting-icon {
+        font-size: 2rem;
+    }
+
+    .waiting-text {
+        font-size: 0.95rem;
+    }
+
+    .community-cards .playing-card {
+        width: 50px;
+        height: 70px;
+    }
+}

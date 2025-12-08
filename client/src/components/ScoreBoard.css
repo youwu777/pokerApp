@@ -1,0 +1,143 @@
+.scoreboard-modal {
+    background: var(--gradient-surface);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-xl);
+    min-width: 400px;
+    max-width: 500px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    animation: fadeIn 0.3s ease;
+}
+
+.scoreboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-lg);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.scoreboard-header h4 {
+    margin: 0;
+    color: var(--color-gold);
+    font-size: 1rem;
+}
+
+.btn-close {
+    background: none;
+    border: none;
+    color: var(--color-text-muted);
+    font-size: 2rem;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+    line-height: 1;
+}
+
+.btn-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--color-text);
+}
+
+.scoreboard-table {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 200px;
+    max-height: 60vh;
+}
+
+.scoreboard-table::-webkit-scrollbar {
+    width: 6px;
+}
+
+.scoreboard-table::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-sm);
+}
+
+.scoreboard-table::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-sm);
+}
+
+.scoreboard-row {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1fr 1fr;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 0.85rem;
+    align-items: center;
+}
+
+.scoreboard-row.header {
+    background: rgba(0, 0, 0, 0.2);
+    font-weight: 600;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.scoreboard-row:last-child {
+    border-bottom: none;
+}
+
+.scoreboard-row.inactive {
+    opacity: 0.6;
+}
+
+.inactive-badge {
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+    font-style: italic;
+    margin-left: var(--space-xs);
+}
+
+.col-name {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    color: var(--color-text);
+    font-weight: 500;
+}
+
+.seated-badge {
+    color: var(--color-gold);
+    font-size: 0.7rem;
+}
+
+.col-buyin,
+.col-stack,
+.col-pl {
+    text-align: right;
+    color: var(--color-text);
+}
+
+.col-pl.profit {
+    color: #4ade80;
+}
+
+.col-pl.loss {
+    color: #f87171;
+}
+
+@media (max-width: 768px) {
+    .scoreboard-modal {
+        min-width: 90vw;
+        max-width: 95vw;
+    }
+}
+
