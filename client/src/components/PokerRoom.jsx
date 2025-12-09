@@ -656,7 +656,7 @@ export default function PokerRoom() {
                                 [animation.targetPlayerId]: { item: animation.item.id, timestamp: Date.now() },
                                 ...(animation.targetSocketId ? { [animation.targetSocketId]: { item: animation.item.id, timestamp: Date.now() } } : {})
                             }))
-                            // Remove impact mark after 1 second
+                            // Remove impact mark after 4 seconds
                             setTimeout(() => {
                                 setImpactMarks(prev => {
                                     const newMarks = { ...prev }
@@ -664,7 +664,7 @@ export default function PokerRoom() {
                                     if (animation.targetSocketId) delete newMarks[animation.targetSocketId]
                                     return newMarks
                                 })
-                            }, 1000)
+                            }, 4000)
                         }}
                     />
                 )
