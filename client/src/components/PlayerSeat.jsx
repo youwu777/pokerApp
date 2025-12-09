@@ -110,6 +110,15 @@ export default function PlayerSeat({
         setShowThrowMenu(false)
     }
 
+    // Debug helper: log when we intend to show the menu
+    if (showThrowMenu) {
+        console.debug('Throw menu should be visible', {
+            menuPosition,
+            targetNickname: player?.nickname,
+            myNickname: myPlayer?.nickname
+        })
+    }
+
     return (
         <div 
             ref={seatRef}

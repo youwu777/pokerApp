@@ -89,6 +89,13 @@ export default function PokerRoom() {
             setIsHost(data.isHost)
             setRoomState(data.roomState)
             setCheckingRoom(false) // Room check complete, we're joined
+            // Prime myPlayer immediately to avoid timing gaps for UI that depends on it
+            if (data.roomState?.players) {
+                const me = data.roomState.players.find(p => p.socketId === socket.id)
+                if (me) {
+                    setMyPlayer(me)
+                }
+            }
             // Load chat history from room state if available
             if (data.roomState?.chatHistory) {
                 setChatMessages(data.roomState.chatHistory)
