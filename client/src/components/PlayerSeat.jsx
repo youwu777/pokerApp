@@ -124,6 +124,7 @@ export default function PlayerSeat({
     }
 
     const handleItemSelect = (item) => {
+        console.log('[THROW] handleItemSelect', { item, hasOnThrow: !!onThrowItem, hasPlayer: !!player })
         if (onThrowItem && player) {
             onThrowItem(item, player)
         }

@@ -37,6 +37,7 @@ export default function ThrowItemMenu({
     }
 
     const handleItemClick = (item) => {
+        console.log('[THROW] menu click', { item, targetPlayerId: targetPlayer?.playerId, targetSocketId: targetPlayer?.socketId })
         onItemSelect(item, targetPlayer)
         onClose()
     }
