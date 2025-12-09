@@ -319,9 +319,25 @@ export default function PokerRoom() {
             <BuyInNotification socket={socket} isHost={isHost} />
             
             <div className="room-content">
-                <div className={`sidebar chat-sidebar ${showChat ? 'chat-open' : ''}`}>
-                    <Chat socket={socket} roomId={roomId} onClose={() => setShowChat(false)} />
+                {/* Desktop Chat Sidebar */}
+                <div className="sidebar chat-sidebar desktop-chat-sidebar">
+                    <Chat socket={socket} roomId={roomId} />
                 </div>
+
+                {/* Mobile Chat Modal */}
+                {showChat && (
+                    <div 
+                        className="chat-modal-overlay"
+                        onClick={() => setShowChat(false)}
+                    >
+                        <div 
+                            className="chat-modal-content"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <Chat socket={socket} roomId={roomId} onClose={() => setShowChat(false)} />
+                        </div>
+                    </div>
+                )}
 
                 <div className="table-container">
                     <PokerTable

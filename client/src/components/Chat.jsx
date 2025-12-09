@@ -5,6 +5,7 @@ export default function Chat({ socket, roomId, onClose }) {
     const [messages, setMessages] = useState([])
     const [input, setInput] = useState('')
     const messagesEndRef = useRef(null)
+    const messagesContainerRef = useRef(null)
 
     const emotes = ['GG', 'NH', 'WP', 'TY', '😂', '😎', '🔥', '💪']
 
@@ -21,7 +22,15 @@ export default function Chat({ socket, roomId, onClose }) {
     }, [socket])
 
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+        // Scroll to bottom when new messages arrive
+        // Use requestAnimationFrame to ensure DOM has updated
+        requestAnimationFrame(() => {
+            if (messagesContainerRef.current) {
+                const container = messagesContainerRef.current
+                // Use scrollTop instead of scrollIntoView for better mobile compatibility
+                container.scrollTop = container.scrollHeight
+            }
+        })
     }, [messages])
 
     const sendMessage = (text) => {
@@ -55,7 +64,7 @@ export default function Chat({ socket, roomId, onClose }) {
                 )}
             </div>
 
-            <div className="chat-messages">
+            <div className="chat-messages" ref={messagesContainerRef}>
                 {messages.length === 0 ? (
                     <div className="chat-empty">
                         No messages yet. Say hi! 👋
@@ -68,7 +77,6 @@ export default function Chat({ socket, roomId, onClose }) {
                         </div>
                     ))
                 )}
-                <div ref={messagesEndRef} />
             </div>
 
             <div className="chat-emotes">
