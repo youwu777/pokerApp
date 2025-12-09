@@ -132,7 +132,14 @@ export default function PlayerSeat({
                         {isAllIn && <div className="badge all-in-badge">ALL IN</div>}
                         {player.lastAction && !isFolded && !isAllIn &&
                             player.lastAction !== 'small blind' && player.lastAction !== 'big blind' && player.lastAction !== 'all-in' && (
-                                <div className="badge action-badge">{player.lastAction.toUpperCase()}</div>
+                                <div className="badge action-badge">
+                                    {player.lastAction.startsWith('bet') ? 'Bet' : 
+                                     player.lastAction.startsWith('raise') ? 'Raise' : 
+                                     player.lastAction === 'check' ? 'Check' :
+                                     player.lastAction === 'call' ? 'Call' :
+                                     player.lastAction === 'fold' ? 'Fold' :
+                                     player.lastAction.charAt(0).toUpperCase() + player.lastAction.slice(1)}
+                                </div>
                             )}
                         {isStandingUpNext && (
                             <div className="badge stand-up-badge">LEAVING NEXT</div>
