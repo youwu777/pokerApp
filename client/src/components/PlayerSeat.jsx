@@ -71,9 +71,9 @@ export default function PlayerSeat({
     const openThrowMenu = (e) => {
         console.log('Seat clicked:', { isMe, hasMyPlayer: !!myPlayer, mySeatNumber: myPlayer?.seatNumber, hasPlayer: !!player, playerSocketId: player?.socketId, mySocketId: myPlayer?.socketId })
         
-        // Only show throw menu if I'm seated and clicking on another player
-        if (isMe || !myPlayer || myPlayer.seatNumber === null || !player) {
-            console.log('Menu blocked - early return')
+        // Only show throw menu if clicking on another player and we have myPlayer
+        if (isMe || !myPlayer || !player) {
+            console.log('Menu blocked - early return', { isMe, hasMyPlayer: !!myPlayer, hasPlayer: !!player, mySeat: myPlayer?.seatNumber })
             return
         }
         
