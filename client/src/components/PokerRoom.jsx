@@ -374,6 +374,8 @@ export default function PokerRoom() {
         // Can't throw at yourself
         if (targetPlayer.socketId === myPlayer.socketId) return
 
+        console.log('[THROW] emitting', { item: item.id, targetPlayerId: targetPlayer.playerId, targetSocketId: targetPlayer.socketId })
+
         // Emit throw item event
         socket.emit('throw-item', {
             itemId: item.id,

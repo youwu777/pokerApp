@@ -849,6 +849,8 @@ export function setupSocketHandlers(io, socket) {
             return;
         }
 
+        console.log(`[THROW] ${fromPlayer.nickname} (${fromPlayer.playerId}/${fromPlayer.socketId}) -> ${targetPlayer.nickname} (${targetPlayer.playerId}/${targetPlayer.socketId}) item=${itemId}`);
+
         // Broadcast to all players in the room
         io.to(room.id).emit('item-thrown', {
             fromPlayerId: fromPlayer.playerId || fromPlayer.socketId,
