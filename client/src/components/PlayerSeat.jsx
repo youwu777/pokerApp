@@ -68,7 +68,7 @@ export default function PlayerSeat({
     const isLowTime = showTimer && timerState.remaining <= 5;
     const isTimeBank = showTimer && timerState.usingTimeBank;
 
-    const handleSeatClick = (e) => {
+    const openThrowMenu = (e) => {
         console.log('Seat clicked:', { isMe, hasMyPlayer: !!myPlayer, mySeatNumber: myPlayer?.seatNumber, hasPlayer: !!player, playerSocketId: player?.socketId, mySocketId: myPlayer?.socketId })
         
         // Only show throw menu if I'm seated and clicking on another player
@@ -113,7 +113,9 @@ export default function PlayerSeat({
         <div 
             ref={seatRef}
             className={`player-seat ${isMe ? 'my-seat' : ''} ${isCurrentPlayer ? 'active-turn' : ''} ${isFolded ? 'folded' : ''} ${isWaiting ? 'waiting' : ''} ${isWinner ? 'winner' : ''} ${impactMark ? `impact-${impactMark.item}` : ''}`}
-            onClick={handleSeatClick}
+            onClick={openThrowMenu}
+            data-player-id={player?.playerId || player?.socketId}
+            data-socket-id={player?.socketId}
             style={{ cursor: myPlayer && myPlayer.seatNumber !== null && !isMe ? 'pointer' : 'default' }}
         >
             {/* Timer Progress Bar */}
@@ -216,6 +218,20 @@ export default function PlayerSeat({
                     title={isStandingUpNext ? "Cancel Stand Up" : "Stand Up"}
                 >
                     {isStandingUpNext ? '↩' : '×'}
+                </button>
+            )}
+
+            {/* Throw button overlay for clarity */}
+            {!isMe && myPlayer && myPlayer.seatNumber !== null && (
+                <button
+                    className="btn-throw-item"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        openThrowMenu(e);
+                    }}
+                    title={`Throw item at ${player.nickname}`}
+                >
+                    🎯
                 </button>
             )}
 

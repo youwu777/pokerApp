@@ -193,14 +193,16 @@ export default function PokerRoom() {
             setChatMessages(prev => [...prev, message])
         })
 
-        socket.on('item-thrown', ({ fromPlayerId, targetPlayerId, itemId }) => {
+        socket.on('item-thrown', ({ fromPlayerId, targetPlayerId, fromSocketId, targetSocketId, itemId }) => {
             // Trigger animation
             const animationId = `${fromPlayerId}-${targetPlayerId}-${Date.now()}`
             setActiveAnimations(prev => [...prev, {
                 id: animationId,
                 item: { id: itemId },
                 fromPlayerId,
-                targetPlayerId
+                targetPlayerId,
+                fromSocketId,
+                targetSocketId
             }])
         })
 
@@ -368,7 +370,8 @@ export default function PokerRoom() {
         // Emit throw item event
         socket.emit('throw-item', {
             itemId: item.id,
-            targetPlayerId: targetPlayer.socketId
+            targetPlayerId: targetPlayer.playerId || targetPlayer.socketId,
+            targetSocketId: targetPlayer.socketId
         })
     }
 
@@ -640,8 +643,8 @@ function ItemAnimationWrapper({ animation, roomState, onComplete }) {
     useEffect(() => {
         // Calculate positions after DOM is ready
         const calculatePositions = () => {
-            const fromElement = document.querySelector(`[data-player-id="${animation.fromPlayerId}"]`)
-            const toElement = document.querySelector(`[data-player-id="${animation.targetPlayerId}"]`)
+            const fromElement = document.querySelector(`[data-player-id="${animation.fromPlayerId}"], [data-socket-id="${animation.fromSocketId}"]`)
+            const toElement = document.querySelector(`[data-player-id="${animation.targetPlayerId}"], [data-socket-id="${animation.targetSocketId}"]`)
 
             if (fromElement && toElement) {
                 const fromRect = fromElement.getBoundingClientRect()

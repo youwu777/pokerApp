@@ -820,22 +820,25 @@ export function setupSocketHandlers(io, socket) {
     });
 
     // Throw item at another player
-    socket.on('throw-item', ({ itemId, targetPlayerId }) => {
+    socket.on('throw-item', ({ itemId, targetPlayerId, targetSocketId }) => {
         const room = roomManager.getRoomBySocketId(socket.id);
         if (!room) return;
 
         const fromPlayer = room.getPlayer(socket.id);
         if (!fromPlayer) return;
 
-        // Can't throw at yourself
-        if (fromPlayer.socketId === targetPlayerId) {
-            socket.emit('error', { message: 'Cannot throw items at yourself' });
+        const targetPlayer = room.getPlayerById
+            ? (room.getPlayerById(targetPlayerId) || room.getPlayer(targetSocketId || targetPlayerId))
+            : room.getPlayer(targetSocketId || targetPlayerId);
+
+        if (!targetPlayer) {
+            socket.emit('error', { message: 'Target player not found' });
             return;
         }
 
-        const targetPlayer = room.getPlayer(targetPlayerId);
-        if (!targetPlayer) {
-            socket.emit('error', { message: 'Target player not found' });
+        // Can't throw at yourself
+        if (fromPlayer.playerId === targetPlayer.playerId || fromPlayer.socketId === targetPlayer.socketId) {
+            socket.emit('error', { message: 'Cannot throw items at yourself' });
             return;
         }
 
@@ -848,8 +851,10 @@ export function setupSocketHandlers(io, socket) {
 
         // Broadcast to all players in the room
         io.to(room.id).emit('item-thrown', {
-            fromPlayerId: fromPlayer.socketId,
-            targetPlayerId: targetPlayerId,
+            fromPlayerId: fromPlayer.playerId || fromPlayer.socketId,
+            fromSocketId: fromPlayer.socketId,
+            targetPlayerId: targetPlayer.playerId || targetPlayer.socketId,
+            targetSocketId: targetPlayer.socketId,
             itemId: itemId
         });
 

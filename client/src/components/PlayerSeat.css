@@ -19,6 +19,35 @@
     cursor: pointer;
 }
 
+.btn-throw-item {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background: rgba(255, 215, 0, 0.15);
+    border: 1px solid rgba(255, 215, 0, 0.4);
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--color-text);
+    font-size: 14px;
+    transition: all 0.2s ease;
+    z-index: 2;
+}
+
+.btn-throw-item:hover {
+    background: rgba(255, 215, 0, 0.3);
+    border-color: rgba(255, 215, 0, 0.6);
+    transform: scale(1.05);
+}
+
+.btn-throw-item:active {
+    transform: scale(0.95);
+}
+
 @media (max-width: 768px) {
     .player-seat {
         width: 90px;
