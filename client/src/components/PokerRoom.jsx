@@ -223,7 +223,17 @@ export default function PokerRoom() {
         })
 
         socket.on('item-thrown', ({ fromPlayerId, targetPlayerId, fromSocketId, targetSocketId, itemId }) => {
-            // Trigger animation with a robust unique id
+            // Snapshot positions at emit-time to avoid later recalcs moving earlier throws
+            const getSeatCenter = (pid, sid) => {
+                const el = document.querySelector(`[data-player-id="${pid}"], [data-socket-id="${sid}"]`)
+                if (!el) return null
+                const r = el.getBoundingClientRect()
+                return { x: r.left + r.width / 2, y: r.top + r.height / 2 }
+            }
+
+            const fromPosition = getSeatCenter(fromPlayerId, fromSocketId)
+            const toPosition = getSeatCenter(targetPlayerId, targetSocketId)
+
             const animationId = (crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`)
             setActiveAnimations(prev => [...prev, {
                 id: animationId,
@@ -231,7 +241,9 @@ export default function PokerRoom() {
                 fromPlayerId,
                 targetPlayerId,
                 fromSocketId,
-                targetSocketId
+                targetSocketId,
+                fromPosition,
+                toPosition
             }])
         })
 
@@ -674,11 +686,16 @@ export default function PokerRoom() {
 }
 
 // Wrapper component to calculate positions after DOM is ready
-function ItemAnimationWrapper({ animation, roomState, onComplete }) {
-    const [positions, setPositions] = useState({ from: null, to: null })
+function ItemAnimationWrapper({ animation, onComplete }) {
+    const [positions, setPositions] = useState({
+        from: animation.fromPosition || null,
+        to: animation.toPosition || null
+    })
 
     useEffect(() => {
-        // Calculate positions after DOM is ready; only for this animation instance
+        // If positions were not captured at emit time, try once after mount
+        if (positions.from && positions.to) return
+
         const calculatePositions = () => {
             const fromElement = document.querySelector(`[data-player-id="${animation.fromPlayerId}"], [data-socket-id="${animation.fromSocketId}"]`)
             const toElement = document.querySelector(`[data-player-id="${animation.targetPlayerId}"], [data-socket-id="${animation.targetSocketId}"]`)
@@ -700,12 +717,10 @@ function ItemAnimationWrapper({ animation, roomState, onComplete }) {
             }
         }
 
-        // Try immediately, then retry after a short delay if needed
         calculatePositions()
         const timeout = setTimeout(calculatePositions, 100)
-
         return () => clearTimeout(timeout)
-    }, [animation.id, animation.fromPlayerId, animation.fromSocketId, animation.targetPlayerId, animation.targetSocketId])
+    }, [animation, positions.from, positions.to])
 
     if (!positions.from || !positions.to) return null
 
