@@ -278,10 +278,27 @@ export default function PlayerSeat({
                 </div>
             )}
 
-            {/* Inline fallback indicator to verify visibility */}
+            {/* Inline fallback menu to guarantee access if popup is off-screen */}
             {showThrowMenu && (
-                <div className="throw-menu-inline-fallback">
-                    Throw menu open…
+                <div className="throw-menu-inline-fallback" onClick={(e) => e.stopPropagation()}>
+                    <div className="fallback-title">Throw at {player.nickname}</div>
+                    <div className="fallback-buttons">
+                        {[
+                            { id: 'tomato', label: 'Tomato 🍅' },
+                            { id: 'egg', label: 'Egg 🥚' },
+                            { id: 'flipflops', label: 'Flip Flops 🩴' },
+                            { id: 'boom', label: 'Boom 💥' },
+                        ].map(item => (
+                            <button
+                                key={item.id}
+                                type="button"
+                                className="fallback-throw-btn"
+                                onClick={() => handleItemSelect({ id: item.id })}
+                            >
+                                {item.label}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             )}
 
