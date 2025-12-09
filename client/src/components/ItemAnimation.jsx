@@ -17,6 +17,11 @@ export default function ItemAnimation({
     const [position, setPosition] = useState(fromPosition)
     const [rotation, setRotation] = useState(0)
     const rafRef = useRef(null)
+    const onCompleteRef = useRef(onComplete)
+
+    useEffect(() => {
+        onCompleteRef.current = onComplete
+    }, [onComplete])
 
     useEffect(() => {
         if (!fromPosition || !toPosition) return
@@ -44,8 +49,8 @@ export default function ItemAnimation({
 
             if (linearProgress < 1) {
                 rafRef.current = requestAnimationFrame(animate)
-            } else if (onComplete) {
-                onComplete()
+            } else if (onCompleteRef.current) {
+                onCompleteRef.current()
             }
         }
 
@@ -54,7 +59,7 @@ export default function ItemAnimation({
         return () => {
             if (rafRef.current) cancelAnimationFrame(rafRef.current)
         }
-    }, [fromPosition, toPosition, onComplete])
+    }, [fromPosition, toPosition])
 
     if (!position) return null
 
