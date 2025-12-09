@@ -11,7 +11,9 @@ export default function PokerTable({
     onSitDown,
     onStandUp,
     onPlayerAction,
-    visibleCommunityCards
+    visibleCommunityCards,
+    onThrowItem,
+    impactMarks
 }) {
     const gameState = roomState?.gameState
     const players = roomState?.players || []
@@ -91,6 +93,9 @@ export default function PokerTable({
                                 onStandUp={onStandUp}
                                 isCurrentPlayer={gameState?.currentPlayer === player?.socketId}
                                 isViewerSeated={isViewerSeated}
+                                myPlayer={myPlayer}
+                                onThrowItem={onThrowItem}
+                                impactMark={impactMarks?.[player?.socketId]}
                             />
                         </div>
                     );

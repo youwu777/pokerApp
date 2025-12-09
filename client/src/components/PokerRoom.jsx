@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useSocket } from '../context/SocketContext'
 import PokerTable from './PokerTable'
@@ -8,6 +8,7 @@ import HostControls from './HostControls'
 import BuyInRequest from './BuyInRequest'
 import BuyInNotification from './BuyInNotification'
 import ScoreBoard from './ScoreBoard'
+import ItemAnimation from './ItemAnimation'
 import './PokerRoom.css'
 
 export default function PokerRoom() {
@@ -30,6 +31,8 @@ export default function PokerRoom() {
     const [showChat, setShowChat] = useState(false)
     const [checkingRoom, setCheckingRoom] = useState(true)
     const [chatMessages, setChatMessages] = useState([])
+    const [activeAnimations, setActiveAnimations] = useState([])
+    const [impactMarks, setImpactMarks] = useState({})
 
     // Get session token from localStorage
     const getSessionToken = () => {
@@ -190,6 +193,17 @@ export default function PokerRoom() {
             setChatMessages(prev => [...prev, message])
         })
 
+        socket.on('item-thrown', ({ fromPlayerId, targetPlayerId, itemId }) => {
+            // Trigger animation
+            const animationId = `${fromPlayerId}-${targetPlayerId}-${Date.now()}`
+            setActiveAnimations(prev => [...prev, {
+                id: animationId,
+                item: { id: itemId },
+                fromPlayerId,
+                targetPlayerId
+            }])
+        })
+
         socket.on('error', ({ message }) => {
             if (message === 'Room not found') {
                 setRoomNotFound(true)
@@ -226,6 +240,7 @@ export default function PokerRoom() {
             socket.off('player-timeout')
             socket.off('hand-complete')
             socket.off('chat-message')
+            socket.off('item-thrown')
             socket.off('error')
             socket.off('connect')
         }
@@ -342,6 +357,19 @@ export default function PokerRoom() {
         if (socket) {
             socket.emit('player-action', { action, amount })
         }
+    }
+
+    const handleThrowItem = (item, targetPlayer) => {
+        if (!socket || !myPlayer || !targetPlayer) return
+        
+        // Can't throw at yourself
+        if (targetPlayer.socketId === myPlayer.socketId) return
+
+        // Emit throw item event
+        socket.emit('throw-item', {
+            itemId: item.id,
+            targetPlayerId: targetPlayer.socketId
+        })
     }
 
     // Show loading while checking room
@@ -529,6 +557,8 @@ export default function PokerRoom() {
                         onSitDown={handleSitDown}
                         onStandUp={handleStandUp}
                         onPlayerAction={handlePlayerAction}
+                        onThrowItem={handleThrowItem}
+                        impactMarks={impactMarks}
                     />
                 </div>
 
@@ -571,6 +601,80 @@ export default function PokerRoom() {
                     {showChat && <span className="chat-badge">●</span>}
                 </button>
             </div>
+
+            {/* Item Animations */}
+            {activeAnimations.map(animation => {
+                // Use a component to handle position calculation after render
+                return (
+                    <ItemAnimationWrapper
+                        key={animation.id}
+                        animation={animation}
+                        roomState={roomState}
+                        onComplete={() => {
+                            setActiveAnimations(prev => prev.filter(a => a.id !== animation.id))
+                            // Show impact mark
+                            setImpactMarks(prev => ({
+                                ...prev,
+                                [animation.targetPlayerId]: { item: animation.item.id, timestamp: Date.now() }
+                            }))
+                            // Remove impact mark after 1 second
+                            setTimeout(() => {
+                                setImpactMarks(prev => {
+                                    const newMarks = { ...prev }
+                                    delete newMarks[animation.targetPlayerId]
+                                    return newMarks
+                                })
+                            }, 1000)
+                        }}
+                    />
+                )
+            })}
         </div>
+    )
+}
+
+// Wrapper component to calculate positions after DOM is ready
+function ItemAnimationWrapper({ animation, roomState, onComplete }) {
+    const [positions, setPositions] = useState({ from: null, to: null })
+
+    useEffect(() => {
+        // Calculate positions after DOM is ready
+        const calculatePositions = () => {
+            const fromElement = document.querySelector(`[data-player-id="${animation.fromPlayerId}"]`)
+            const toElement = document.querySelector(`[data-player-id="${animation.targetPlayerId}"]`)
+
+            if (fromElement && toElement) {
+                const fromRect = fromElement.getBoundingClientRect()
+                const toRect = toElement.getBoundingClientRect()
+                
+                setPositions({
+                    from: {
+                        x: fromRect.left + fromRect.width / 2,
+                        y: fromRect.top + fromRect.height / 2
+                    },
+                    to: {
+                        x: toRect.left + toRect.width / 2,
+                        y: toRect.top + toRect.height / 2
+                    }
+                })
+            }
+        }
+
+        // Try immediately, then retry after a short delay if needed
+        calculatePositions()
+        const timeout = setTimeout(calculatePositions, 100)
+
+        return () => clearTimeout(timeout)
+    }, [animation.fromPlayerId, animation.targetPlayerId, roomState])
+
+    if (!positions.from || !positions.to) return null
+
+    return (
+        <ItemAnimation
+            item={animation.item}
+            fromPosition={positions.from}
+            toPosition={positions.to}
+            onComplete={onComplete}
+        />
     )
 }

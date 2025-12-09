@@ -818,6 +818,43 @@ export function setupSocketHandlers(io, socket) {
             room.disconnectTimeouts.set(player.sessionToken || player.socketId, timeoutId);
         }
     });
+
+    // Throw item at another player
+    socket.on('throw-item', ({ itemId, targetPlayerId }) => {
+        const room = roomManager.getRoomBySocketId(socket.id);
+        if (!room) return;
+
+        const fromPlayer = room.getPlayer(socket.id);
+        if (!fromPlayer) return;
+
+        // Can't throw at yourself
+        if (fromPlayer.socketId === targetPlayerId) {
+            socket.emit('error', { message: 'Cannot throw items at yourself' });
+            return;
+        }
+
+        const targetPlayer = room.getPlayer(targetPlayerId);
+        if (!targetPlayer) {
+            socket.emit('error', { message: 'Target player not found' });
+            return;
+        }
+
+        // Validate item ID
+        const validItems = ['tomato', 'egg', 'flipflops', 'boom'];
+        if (!validItems.includes(itemId)) {
+            socket.emit('error', { message: 'Invalid item' });
+            return;
+        }
+
+        // Broadcast to all players in the room
+        io.to(room.id).emit('item-thrown', {
+            fromPlayerId: fromPlayer.socketId,
+            targetPlayerId: targetPlayerId,
+            itemId: itemId
+        });
+
+        console.log(`[THROW] ${fromPlayer.nickname} threw ${itemId} at ${targetPlayer.nickname}`);
+    });
 }
 
 // Helper functions for timer management

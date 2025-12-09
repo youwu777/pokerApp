@@ -1,4 +1,6 @@
+import { useState, useRef } from 'react'
 import PlayingCard from './PlayingCard'
+import ThrowItemMenu from './ThrowItemMenu'
 import './PlayerSeat.css'
 
 export default function PlayerSeat({
@@ -13,8 +15,14 @@ export default function PlayerSeat({
     onSitDown,
     onStandUp,
     isCurrentPlayer,
-    isViewerSeated
+    isViewerSeated,
+    myPlayer,
+    onThrowItem,
+    impactMark
 }) {
+    const [showThrowMenu, setShowThrowMenu] = useState(false)
+    const [menuPosition, setMenuPosition] = useState(null)
+    const seatRef = useRef(null)
     if (!player) {
         if (isViewerSeated) {
             return <div className="player-seat empty-seat disabled"></div>;
@@ -60,8 +68,37 @@ export default function PlayerSeat({
     const isLowTime = showTimer && timerState.remaining <= 5;
     const isTimeBank = showTimer && timerState.usingTimeBank;
 
+    const handleSeatClick = (e) => {
+        // Only show throw menu if I'm seated and clicking on another player
+        if (isMe || !myPlayer || myPlayer.seatNumber === null || !player) return
+        
+        // Don't show menu if clicking on myself
+        if (player.socketId === myPlayer.socketId) return
+
+        const rect = seatRef.current?.getBoundingClientRect()
+        if (rect) {
+            setMenuPosition({
+                x: rect.left + rect.width / 2,
+                y: rect.top - 10
+            })
+            setShowThrowMenu(true)
+        }
+    }
+
+    const handleItemSelect = (item) => {
+        if (onThrowItem && player) {
+            onThrowItem(item, player)
+        }
+        setShowThrowMenu(false)
+    }
+
     return (
-        <div className={`player-seat ${isMe ? 'my-seat' : ''} ${isCurrentPlayer ? 'active-turn' : ''} ${isFolded ? 'folded' : ''} ${isWaiting ? 'waiting' : ''} ${isWinner ? 'winner' : ''}`}>
+        <div 
+            ref={seatRef}
+            className={`player-seat ${isMe ? 'my-seat' : ''} ${isCurrentPlayer ? 'active-turn' : ''} ${isFolded ? 'folded' : ''} ${isWaiting ? 'waiting' : ''} ${isWinner ? 'winner' : ''} ${impactMark ? `impact-${impactMark.item}` : ''}`}
+            onClick={handleSeatClick}
+            style={{ cursor: myPlayer && myPlayer.seatNumber !== null && !isMe ? 'pointer' : 'default' }}
+        >
             {/* Timer Progress Bar */}
             {showTimer && (
                 <div className="seat-timer-container">
@@ -163,6 +200,27 @@ export default function PlayerSeat({
                 >
                     {isStandingUpNext ? '↩' : '×'}
                 </button>
+            )}
+
+            {/* Impact Mark */}
+            {impactMark && (
+                <div className={`impact-mark impact-${impactMark.item}`}>
+                    {impactMark.item === 'tomato' && '🍅'}
+                    {impactMark.item === 'egg' && '🥚'}
+                    {impactMark.item === 'flipflops' && '🩴'}
+                    {impactMark.item === 'boom' && '💥'}
+                </div>
+            )}
+
+            {/* Throw Item Menu */}
+            {showThrowMenu && menuPosition && (
+                <ThrowItemMenu
+                    targetPlayer={player}
+                    myPlayer={myPlayer}
+                    onItemSelect={handleItemSelect}
+                    onClose={() => setShowThrowMenu(false)}
+                    position={menuPosition}
+                />
             )}
         </div>
     )

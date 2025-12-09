@@ -67,6 +67,65 @@
     }
 }
 
+/* Impact Marks */
+.impact-mark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 3rem;
+    z-index: 50;
+    pointer-events: none;
+    animation: impactSplash 1s ease-out forwards;
+}
+
+.impact-tomato .impact-mark {
+    filter: drop-shadow(0 0 10px rgba(255, 0, 0, 0.5));
+}
+
+.impact-egg .impact-mark {
+    filter: drop-shadow(0 0 10px rgba(255, 255, 0, 0.5));
+}
+
+.impact-flipflops .impact-mark {
+    filter: drop-shadow(0 0 10px rgba(139, 69, 19, 0.5));
+}
+
+.impact-boom .impact-mark {
+    filter: drop-shadow(0 0 15px rgba(255, 165, 0, 0.8));
+    animation: impactExplosion 1s ease-out forwards;
+}
+
+@keyframes impactSplash {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.5);
+    }
+    20% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.2);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+@keyframes impactExplosion {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.3) rotate(0deg);
+    }
+    30% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.5) rotate(180deg);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(2) rotate(360deg);
+    }
+}
+
 .player-seat.my-seat {
     border-color: #60a5fa;
     background: rgba(37, 99, 235, 0.15);
