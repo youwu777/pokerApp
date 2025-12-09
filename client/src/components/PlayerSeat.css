@@ -14,6 +14,11 @@
     box-sizing: border-box;
 }
 
+.player-seat:not(.my-seat):hover {
+    border-color: rgba(255, 215, 0, 0.3);
+    cursor: pointer;
+}
+
 @media (max-width: 768px) {
     .player-seat {
         width: 90px;

@@ -69,19 +69,36 @@ export default function PlayerSeat({
     const isTimeBank = showTimer && timerState.usingTimeBank;
 
     const handleSeatClick = (e) => {
+        console.log('Seat clicked:', { isMe, hasMyPlayer: !!myPlayer, mySeatNumber: myPlayer?.seatNumber, hasPlayer: !!player, playerSocketId: player?.socketId, mySocketId: myPlayer?.socketId })
+        
         // Only show throw menu if I'm seated and clicking on another player
-        if (isMe || !myPlayer || myPlayer.seatNumber === null || !player) return
+        if (isMe || !myPlayer || myPlayer.seatNumber === null || !player) {
+            console.log('Menu blocked - early return')
+            return
+        }
         
         // Don't show menu if clicking on myself
-        if (player.socketId === myPlayer.socketId) return
+        if (player.socketId === myPlayer.socketId) {
+            console.log('Menu blocked - same player')
+            return
+        }
+
+        // Stop event propagation
+        e.stopPropagation()
+        e.preventDefault()
 
         const rect = seatRef.current?.getBoundingClientRect()
+        console.log('Seat rect:', rect)
         if (rect) {
-            setMenuPosition({
+            const position = {
                 x: rect.left + rect.width / 2,
                 y: rect.top - 10
-            })
+            }
+            console.log('Setting menu position:', position)
+            setMenuPosition(position)
             setShowThrowMenu(true)
+        } else {
+            console.log('No rect found')
         }
     }
 
@@ -127,7 +144,7 @@ export default function PlayerSeat({
             )}
 
             {/* Player Info */}
-            <div className="player-info">
+            <div className="player-info" onClick={(e) => e.stopPropagation()}>
                 <div className="player-name">
                     {player.nickname}
                     {isMe && <span className="you-badge">YOU</span>}
@@ -137,7 +154,7 @@ export default function PlayerSeat({
 
             {/* Hole Cards or Mucked Status */}
             {!isWaiting && (
-                <div className="hole-cards-container">
+                <div className="hole-cards-container" onClick={(e) => e.stopPropagation()}>
                     {isMucked ? (
                         <div className="mucked-cards">
                             <span className="text-xs text-gray-400">Mucked</span>

@@ -1,13 +1,15 @@
 .throw-item-menu {
-    position: absolute;
+    position: fixed;
     background: var(--gradient-surface);
     border: 2px solid var(--color-gold);
     border-radius: var(--radius-lg);
     padding: var(--space-sm);
     box-shadow: var(--shadow-xl);
-    z-index: 1000;
+    z-index: 10000;
     min-width: 180px;
     animation: slideDown 0.2s ease;
+    transform: translate(-50%, -100%);
+    margin-top: -10px;
 }
 
 .throw-item-menu-header {
@@ -60,11 +62,11 @@
 @keyframes slideDown {
     from {
         opacity: 0;
-        transform: translateY(-10px);
+        transform: translate(-50%, calc(-100% - 10px));
     }
     to {
         opacity: 1;
-        transform: translateY(0);
+        transform: translate(-50%, -100%);
     }
 }
 

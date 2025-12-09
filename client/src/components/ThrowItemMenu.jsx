@@ -46,11 +46,17 @@ export default function ThrowItemMenu({
         top: `${position.y}px`
     } : {}
 
+    if (!position) {
+        console.warn('ThrowItemMenu: No position provided')
+        return null
+    }
+
     return (
         <div 
             ref={menuRef}
             className="throw-item-menu"
             style={menuStyle}
+            onClick={(e) => e.stopPropagation()}
         >
             <div className="throw-item-menu-header">
                 <span>Throw at {targetPlayer.nickname}</span>
