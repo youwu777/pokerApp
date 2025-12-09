@@ -48,6 +48,20 @@
     transform: scale(0.95);
 }
 
+.throw-menu-inline-fallback {
+    position: absolute;
+    bottom: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 215, 0, 0.15);
+    border: 1px solid rgba(255, 215, 0, 0.4);
+    color: var(--color-text);
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-size: 11px;
+    z-index: 11000;
+}
+
 @media (max-width: 768px) {
     .player-seat {
         width: 90px;

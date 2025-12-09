@@ -129,7 +129,9 @@ export default function PlayerSeat({
         console.debug('Throw menu should be visible', {
             menuPosition,
             targetNickname: player?.nickname,
-            myNickname: myPlayer?.nickname
+            myNickname: myPlayer?.nickname,
+            targetSocketId: player?.socketId,
+            targetPlayerId: player?.playerId
         })
     }
 
@@ -248,6 +250,7 @@ export default function PlayerSeat({
             {/* Throw button overlay for clarity */}
             {!isMe && myPlayer && (
                 <button
+                    type="button"
                     className="btn-throw-item"
                     onClick={(e) => {
                         e.stopPropagation();
@@ -266,6 +269,13 @@ export default function PlayerSeat({
                     {impactMark.item === 'egg' && '🥚'}
                     {impactMark.item === 'flipflops' && '🩴'}
                     {impactMark.item === 'boom' && '💥'}
+                </div>
+            )}
+
+            {/* Inline fallback indicator to verify visibility */}
+            {showThrowMenu && (
+                <div className="throw-menu-inline-fallback">
+                    Throw menu open…
                 </div>
             )}
 
