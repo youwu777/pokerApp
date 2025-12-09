@@ -98,23 +98,29 @@ export default function PlayerSeat({
 
         const rect = seatRef.current?.getBoundingClientRect()
         console.log('Seat rect:', rect)
+        let position
         if (rect) {
-            const position = {
+            position = {
                 x: rect.left + rect.width / 2,
                 // Drop the menu below the seat so it stays visible on mobile/top rows
                 y: rect.bottom + 8
             }
-            console.log('Setting menu position:', position)
-            setMenuPosition(position)
-            setShowThrowMenu(true)
         } else {
-            console.log('No rect found, using viewport center fallback')
-            setMenuPosition({
+            position = {
                 x: window.innerWidth / 2,
                 y: window.innerHeight / 2
-            })
-            setShowThrowMenu(true)
+            }
+            console.log('No rect found, using viewport center fallback')
         }
+
+        // Clamp to viewport to avoid being off-screen
+        const clamped = {
+            x: Math.min(Math.max(position.x, 12), window.innerWidth - 12),
+            y: Math.min(Math.max(position.y, 12), window.innerHeight - 12)
+        }
+        console.log('Setting menu position (clamped):', clamped)
+        setMenuPosition(clamped)
+        setShowThrowMenu(true)
     }
 
     const handleItemSelect = (item) => {
