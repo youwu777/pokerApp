@@ -274,9 +274,9 @@ export default function PlayerSeat({
                 <div className={`impact-mark impact-${impactMark.item}`}>
                     {/* Distinct impact icons (not the thrown item itself) */}
                     {impactMark.item === 'tomato' && '💥'}
-                    {impactMark.item === 'egg' && '💢'}
-                    {impactMark.item === 'flipflops' && '⭐'}
-                    {impactMark.item === 'boom' && '⚡'}
+                    {impactMark.item === 'egg' && '🐣'}
+                    {impactMark.item === 'flipflops' && '🩴'}
+                    {impactMark.item === 'boom' && '💥'}
                 </div>
             )}
 
@@ -290,10 +290,10 @@ export default function PlayerSeat({
                     <div className="fallback-title">Throw at {player.nickname}</div>
                     <div className="fallback-buttons">
                         {[
-                            { id: 'tomato', label: 'Tomato 🍅' },
-                            { id: 'egg', label: 'Egg 🥚' },
-                            { id: 'flipflops', label: 'Flip Flops 🩴' },
-                            { id: 'boom', label: 'Boom 💥' },
+                            { id: 'tomato', label: '🍅' },
+                            { id: 'egg', label: '🥚' },
+                            { id: 'flipflops', label: '🩴' },
+                            { id: 'boom', label: '💣' },
                         ].map(item => (
                             <button
                                 key={item.id}

@@ -5,7 +5,7 @@ const ITEMS = [
     { id: 'tomato', name: 'Tomato', emoji: '🍅' },
     { id: 'egg', name: 'Egg', emoji: '🥚' },
     { id: 'flipflops', name: 'Flip Flops', emoji: '🩴' },
-    { id: 'boom', name: 'Boom', emoji: '💥' }
+    { id: 'boom', name: 'Boom', emoji: '💣' }
 ]
 
 export default function ThrowItemMenu({ 
