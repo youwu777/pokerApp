@@ -13,6 +13,7 @@ const httpServer = createServer(app);
 const allowedOrigins = [
   "http://localhost:5173", // Local development
   "https://youwu777.github.io", // GitHub Pages
+  "https://honest-poker.win",
   process.env.ALLOWED_ORIGIN // Allow custom origin via environment variable
 ].filter(Boolean); // Remove undefined values
 
