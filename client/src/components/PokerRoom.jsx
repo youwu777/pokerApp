@@ -287,20 +287,20 @@ export default function PokerRoom() {
 
                 <div className="room-controls">
                     {myPlayer && myPlayer.seatNumber !== null && (
-                        <>
-                            <button
-                                className={myPlayer.standUpNextHand ? "btn btn-secondary btn-sm" : "btn btn-outline-danger btn-sm"}
-                                onClick={handleStandUp}
-                                disabled={myPlayer.standUpNextHand && !roomState.gameState}
-                            >
-                                {myPlayer.standUpNextHand ? "Leave Next Hand" : "Leave Seat"}
-                            </button>
-                            <BuyInRequest
-                                socket={socket}
-                                isHost={isHost}
-                                myPlayer={myPlayer}
-                            />
-                        </>
+                        <button
+                            className={myPlayer.standUpNextHand ? "btn btn-secondary btn-sm" : "btn btn-outline-danger btn-sm"}
+                            onClick={handleStandUp}
+                            disabled={myPlayer.standUpNextHand && !roomState.gameState}
+                        >
+                            {myPlayer.standUpNextHand ? "Leave Next Hand" : "Leave Seat"}
+                        </button>
+                    )}
+                    {myPlayer && (
+                        <BuyInRequest
+                            socket={socket}
+                            isHost={isHost}
+                            myPlayer={myPlayer}
+                        />
                     )}
                     {roomState && (
                         <ScoreBoard 
@@ -352,7 +352,7 @@ export default function PokerRoom() {
                 </div>
 
                 {/* Mobile Action Panel - Fixed at bottom */}
-                {myPlayer && myPlayer.seatNumber !== null && roomState.gameState && (
+                {myPlayer && myPlayer.seatNumber !== null && roomState.gameState && myPlayer.status !== 'all-in' && (
                     <div className="mobile-action-panel">
                         <ActionPanel
                             isMyTurn={roomState.gameState.currentPlayer === myPlayer.socketId}
