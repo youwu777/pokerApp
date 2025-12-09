@@ -288,9 +288,9 @@
 
 .position-label {
     position: absolute;
-    top: -8px;
-    left: 50%;
-    transform: translateX(-50%);
+    top: 6px;
+    left: 6px;
+    transform: none;
     background: rgba(0, 0, 0, 0.8);
     color: #9ca3af;
     padding: 1px 6px;
