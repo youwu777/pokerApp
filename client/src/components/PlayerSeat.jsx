@@ -272,10 +272,11 @@ export default function PlayerSeat({
             {/* Impact Mark */}
             {impactMark && (
                 <div className={`impact-mark impact-${impactMark.item}`}>
-                    {impactMark.item === 'tomato' && '🍅'}
-                    {impactMark.item === 'egg' && '🥚'}
-                    {impactMark.item === 'flipflops' && '🩴'}
-                    {impactMark.item === 'boom' && '💥'}
+                    {/* Distinct impact icons (not the thrown item itself) */}
+                    {impactMark.item === 'tomato' && '💥'}
+                    {impactMark.item === 'egg' && '💢'}
+                    {impactMark.item === 'flipflops' && '⭐'}
+                    {impactMark.item === 'boom' && '⚡'}
                 </div>
             )}
 
