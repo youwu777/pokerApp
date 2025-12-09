@@ -654,12 +654,10 @@ export default function PokerRoom() {
 
             {/* Item Animations */}
             {activeAnimations.map(animation => {
-                // Use a component to handle position calculation after render
                 return (
                     <ItemAnimationWrapper
                         key={animation.id}
                         animation={animation}
-                        roomState={roomState}
                         onComplete={() => {
                             setActiveAnimations(prev => prev.filter(a => a.id !== animation.id))
 

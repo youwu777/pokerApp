@@ -445,6 +445,7 @@
 
     .current-bet {
         padding: 2px 6px;
+        position: relative;
     }
 }
 

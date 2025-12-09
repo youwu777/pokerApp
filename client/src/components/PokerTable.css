@@ -332,6 +332,7 @@
 
     /* Mobile bet positioning - adjusted for smaller seats */
     .seat-0 .current-bet {
+        position: absolute;
         top: auto;
         bottom: -25px;
         font-size: 0.65rem;
@@ -342,8 +343,9 @@
     .seat-2 .current-bet,
     .seat-3 .current-bet,
     .seat-4 .current-bet {
+        position: absolute;
         left: auto;
-        right: -8px;
+        right: -28px;
         top: 50%;
         bottom: auto;
         transform: translateY(-50%);
@@ -354,8 +356,9 @@
     .seat-6 .current-bet,
     .seat-7 .current-bet,
     .seat-8 .current-bet {
+        position: absolute;
         right: auto;
-        left: -8px;
+        left: -20px;
         top: 50%;
         bottom: auto;
         transform: translateY(-50%);
@@ -363,10 +366,13 @@
     }
 
     .seat-9 .current-bet {
+        position: absolute;
         bottom: auto;
         top: -25px;
-        left: 50%;
+        left: 45%;
         transform: translateX(-50%);
         font-size: 0.65rem;
+        min-width: 48px;
+        padding: 2px 8px;
     }
 }
