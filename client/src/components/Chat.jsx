@@ -1,25 +1,39 @@
 import { useState, useEffect, useRef } from 'react'
 import './Chat.css'
 
-export default function Chat({ socket, roomId, onClose }) {
-    const [messages, setMessages] = useState([])
+export default function Chat({ socket, roomId, onClose, initialMessages = [], onMessagesChange }) {
+    const [messages, setMessages] = useState(initialMessages)
     const [input, setInput] = useState('')
     const messagesEndRef = useRef(null)
     const messagesContainerRef = useRef(null)
 
     const emotes = ['GG', 'NH', 'WP', 'TY', '😂', '😎', '🔥', '💪']
 
+    // Update messages when initialMessages prop changes (from parent)
+    useEffect(() => {
+        setMessages(initialMessages)
+    }, [initialMessages])
+
     useEffect(() => {
         if (!socket) return
 
-        socket.on('chat-message', (message) => {
-            setMessages(prev => [...prev, message])
-        })
+        const handleChatMessage = (message) => {
+            setMessages(prev => {
+                const newMessages = [...prev, message]
+                // Notify parent component of message changes
+                if (onMessagesChange) {
+                    onMessagesChange(newMessages)
+                }
+                return newMessages
+            })
+        }
+
+        socket.on('chat-message', handleChatMessage)
 
         return () => {
-            socket.off('chat-message')
+            socket.off('chat-message', handleChatMessage)
         }
-    }, [socket])
+    }, [socket, onMessagesChange])
 
     useEffect(() => {
         // Scroll to bottom when new messages arrive

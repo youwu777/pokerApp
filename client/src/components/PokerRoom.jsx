@@ -28,6 +28,8 @@ export default function PokerRoom() {
     const [roomNotFound, setRoomNotFound] = useState(false)
     const [visibleCommunityCards, setVisibleCommunityCards] = useState([])
     const [showChat, setShowChat] = useState(false)
+    const [checkingRoom, setCheckingRoom] = useState(true)
+    const [chatMessages, setChatMessages] = useState([])
 
     // Get session token from localStorage
     const getSessionToken = () => {
@@ -83,6 +85,11 @@ export default function PokerRoom() {
             setJoined(true)
             setIsHost(data.isHost)
             setRoomState(data.roomState)
+            setCheckingRoom(false) // Room check complete, we're joined
+            // Load chat history from room state if available
+            if (data.roomState?.chatHistory) {
+                setChatMessages(data.roomState.chatHistory)
+            }
             // Save sessionToken and nickname for reconnection
             if (data.sessionToken) {
                 saveSessionToken(data.sessionToken)
@@ -102,6 +109,10 @@ export default function PokerRoom() {
             // Update visible community cards if game state exists
             if (state?.gameState?.communityCards) {
                 setVisibleCommunityCards(state.gameState.communityCards)
+            }
+            // Update chat messages if chat history is included
+            if (state?.chatHistory) {
+                setChatMessages(state.chatHistory)
             }
         })
 
@@ -175,7 +186,8 @@ export default function PokerRoom() {
         })
 
         socket.on('chat-message', (message) => {
-            // Handled by Chat component
+            // Store chat messages in parent component to persist across modal open/close
+            setChatMessages(prev => [...prev, message])
         })
 
         socket.on('error', ({ message }) => {
@@ -229,26 +241,75 @@ export default function PokerRoom() {
         }
     }, [roomState, socket])
 
-    // Attempt to auto-rejoin on mount if we have a stored sessionToken and nickname
+    // Check if room exists and attempt auto-reconnect on mount
     useEffect(() => {
-        if (!socket || joined || !socket.connected) return
-
-        const sessionToken = getSessionToken()
-        const storedNickname = getStoredNickname()
-        
-        if (sessionToken && storedNickname) {
-            // We have both token and nickname, automatically reconnect
-            // Note: buyinAmount is not needed for reconnection as server uses existing player's stack
-            console.log('Auto-reconnecting with sessionToken:', sessionToken, 'nickname:', storedNickname)
-            setNickname(storedNickname)
-            socket.emit('join-room', {
-                roomId,
-                nickname: storedNickname,
-                buyinAmount: 1000, // Default, won't be used if player already exists
-                sessionToken: sessionToken
-            })
+        const checkRoomAndReconnect = async () => {
+            setCheckingRoom(true)
+            
+            // First, check if room exists via API
+            try {
+                const apiUrl = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001'
+                const response = await fetch(`${apiUrl}/api/rooms/${roomId}`)
+                
+                if (!response.ok) {
+                    // Room doesn't exist, redirect to home
+                    setRoomNotFound(true)
+                    setCheckingRoom(false)
+                    setTimeout(() => navigate('/'), 2000)
+                    return
+                }
+                
+                // Room exists, now check if we can auto-reconnect
+                const sessionToken = getSessionToken()
+                const storedNickname = getStoredNickname()
+                
+                if (sessionToken && storedNickname) {
+                    // Wait for socket to be connected if not already
+                    if (socket) {
+                        if (socket.connected) {
+                            // Socket is connected, reconnect immediately
+                            console.log('Auto-reconnecting with sessionToken:', sessionToken, 'nickname:', storedNickname)
+                            setNickname(storedNickname)
+                            socket.emit('join-room', {
+                                roomId,
+                                nickname: storedNickname,
+                                buyinAmount: 1000, // Default, won't be used if player already exists
+                                sessionToken: sessionToken
+                            })
+                            // Don't set checkingRoom to false yet - wait for room-joined event
+                        } else {
+                            // Socket not connected yet, wait for connection
+                            const onConnect = () => {
+                                console.log('Socket connected, auto-reconnecting...')
+                                setNickname(storedNickname)
+                                socket.emit('join-room', {
+                                    roomId,
+                                    nickname: storedNickname,
+                                    buyinAmount: 1000,
+                                    sessionToken: sessionToken
+                                })
+                                socket.off('connect', onConnect)
+                            }
+                            socket.on('connect', onConnect)
+                        }
+                    } else {
+                        // No socket yet, show join form
+                        setCheckingRoom(false)
+                    }
+                } else {
+                    // No stored credentials, show join form
+                    setCheckingRoom(false)
+                }
+            } catch (error) {
+                console.error('Error checking room:', error)
+                setRoomNotFound(true)
+                setCheckingRoom(false)
+                setTimeout(() => navigate('/'), 2000)
+            }
         }
-    }, [socket, joined, roomId])
+        
+        checkRoomAndReconnect()
+    }, [roomId, socket, navigate])
 
     const handleJoinRoom = (e) => {
         e.preventDefault()
@@ -283,6 +344,15 @@ export default function PokerRoom() {
         }
     }
 
+    // Show loading while checking room
+    if (checkingRoom) {
+        return (
+            <div className="poker-room">
+                <div className="loading">Checking room...</div>
+            </div>
+        )
+    }
+
     // Show room not found modal
     if (roomNotFound) {
         return (
@@ -307,6 +377,7 @@ export default function PokerRoom() {
         )
     }
 
+    // Show join form only if not joined and room exists
     if (!joined) {
         return (
             <div className="poker-room join-screen">
@@ -418,7 +489,12 @@ export default function PokerRoom() {
             <div className="room-content">
                 {/* Desktop Chat Sidebar */}
                 <div className="sidebar chat-sidebar desktop-chat-sidebar">
-                    <Chat socket={socket} roomId={roomId} />
+                    <Chat 
+                        socket={socket} 
+                        roomId={roomId}
+                        initialMessages={chatMessages}
+                        onMessagesChange={setChatMessages}
+                    />
                 </div>
 
                 {/* Mobile Chat Modal */}
@@ -431,7 +507,13 @@ export default function PokerRoom() {
                             className="chat-modal-content"
                             onClick={(e) => e.stopPropagation()}
                         >
-                            <Chat socket={socket} roomId={roomId} onClose={() => setShowChat(false)} />
+                            <Chat 
+                                socket={socket} 
+                                roomId={roomId} 
+                                onClose={() => setShowChat(false)}
+                                initialMessages={chatMessages}
+                                onMessagesChange={setChatMessages}
+                            />
                         </div>
                     </div>
                 )}

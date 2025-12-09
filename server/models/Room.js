@@ -183,7 +183,8 @@ export class Room {
             isPaused: this.isPaused,
             handCount: this.handCount,
             gameState: this.game ? this.game.toJSON() : null,
-            scoreboard: roomScoreboard // Only include scoreboard entries for this room
+            scoreboard: roomScoreboard, // Only include scoreboard entries for this room
+            chatHistory: this.chatHistory // Include chat history for reconnection
         };
     }
 }
