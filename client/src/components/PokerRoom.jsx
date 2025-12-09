@@ -678,7 +678,7 @@ function ItemAnimationWrapper({ animation, roomState, onComplete }) {
     const [positions, setPositions] = useState({ from: null, to: null })
 
     useEffect(() => {
-        // Calculate positions after DOM is ready
+        // Calculate positions after DOM is ready; only for this animation instance
         const calculatePositions = () => {
             const fromElement = document.querySelector(`[data-player-id="${animation.fromPlayerId}"], [data-socket-id="${animation.fromSocketId}"]`)
             const toElement = document.querySelector(`[data-player-id="${animation.targetPlayerId}"], [data-socket-id="${animation.targetSocketId}"]`)
@@ -705,7 +705,7 @@ function ItemAnimationWrapper({ animation, roomState, onComplete }) {
         const timeout = setTimeout(calculatePositions, 100)
 
         return () => clearTimeout(timeout)
-    }, [animation.fromPlayerId, animation.targetPlayerId, roomState])
+    }, [animation.id, animation.fromPlayerId, animation.fromSocketId, animation.targetPlayerId, animation.targetSocketId])
 
     if (!positions.from || !positions.to) return null
 
