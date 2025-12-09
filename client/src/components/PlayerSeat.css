@@ -19,6 +19,16 @@
     cursor: pointer;
 }
 
+.cat-seat {
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+}
+
 .btn-throw-item {
     position: absolute;
     top: 6px;

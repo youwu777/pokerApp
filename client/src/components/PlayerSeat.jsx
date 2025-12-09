@@ -150,11 +150,14 @@ export default function PlayerSeat({
     return (
         <div 
             ref={seatRef}
-            className={`player-seat ${isMe ? 'my-seat' : ''} ${isCurrentPlayer ? 'active-turn' : ''} ${isFolded ? 'folded' : ''} ${isWaiting ? 'waiting' : ''} ${isWinner ? 'winner' : ''} ${impactClass}`}
+            className={`player-seat cat-seat ${isMe ? 'my-seat' : ''} ${isCurrentPlayer ? 'active-turn' : ''} ${isFolded ? 'folded' : ''} ${isWaiting ? 'waiting' : ''} ${isWinner ? 'winner' : ''} ${impactClass}`}
             onClick={openThrowMenu}
             data-player-id={player?.playerId || player?.socketId}
             data-socket-id={player?.socketId}
-            style={{ cursor: myPlayer && myPlayer.seatNumber !== null && !isMe ? 'pointer' : 'default' }}
+            style={{ 
+                cursor: myPlayer && myPlayer.seatNumber !== null && !isMe ? 'pointer' : 'default',
+                backgroundImage: `url(${catImage})`
+            }}
         >
             {/* Timer Progress Bar */}
             {showTimer && (
