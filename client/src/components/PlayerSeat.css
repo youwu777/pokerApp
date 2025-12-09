@@ -304,9 +304,9 @@
 .player-info {
     width: 100%;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
     gap: 6px;
     z-index: 2;
     margin-top: auto;
@@ -315,7 +315,7 @@
 
 .player-name {
     font-weight: 600;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     color: white;
     display: flex;
     align-items: center;
@@ -323,7 +323,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 80px;
+    max-width: 70px;
     margin-bottom: 0;
 }
 
@@ -338,10 +338,10 @@
 
 .player-chips {
     color: #fbbf24;
-    font-size: 0.8rem;
+    font-size: 0.82rem;
     font-family: 'Roboto Mono', monospace;
     background: rgba(0, 0, 0, 0.4);
-    padding: 1px 4px;
+    padding: 2px 6px;
     border-radius: 4px;
     white-space: nowrap;
 }
