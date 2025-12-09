@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import PlayingCard from './PlayingCard'
 import ThrowItemMenu from './ThrowItemMenu'
+import catImage from '../image/image.png'
 import './PlayerSeat.css'
 
 export default function PlayerSeat({
@@ -184,6 +185,9 @@ export default function PlayerSeat({
 
             {/* Player Info */}
             <div className="player-info" onClick={(e) => e.stopPropagation()}>
+                <div className="player-avatar">
+                    <img src={catImage} alt="Player avatar" />
+                </div>
                 <div className="player-name">
                     {player.nickname}
                     {isMe && <span className="you-badge">YOU</span>}
