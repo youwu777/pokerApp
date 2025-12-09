@@ -29,6 +29,52 @@ export default function PokerRoom() {
     const [visibleCommunityCards, setVisibleCommunityCards] = useState([])
     const [showChat, setShowChat] = useState(false)
 
+    // Get session token from localStorage
+    const getSessionToken = () => {
+        try {
+            return localStorage.getItem(`sessionToken_${roomId}`)
+        } catch (e) {
+            console.warn('localStorage not available:', e)
+            return null
+        }
+    }
+
+    // Get stored nickname from localStorage
+    const getStoredNickname = () => {
+        try {
+            return localStorage.getItem(`nickname_${roomId}`)
+        } catch (e) {
+            console.warn('localStorage not available:', e)
+            return null
+        }
+    }
+
+    // Save session token to localStorage
+    const saveSessionToken = (token) => {
+        try {
+            if (token) {
+                localStorage.setItem(`sessionToken_${roomId}`, token)
+            } else {
+                localStorage.removeItem(`sessionToken_${roomId}`)
+            }
+        } catch (e) {
+            console.warn('Failed to save sessionToken to localStorage:', e)
+        }
+    }
+
+    // Save nickname to localStorage
+    const saveNickname = (name) => {
+        try {
+            if (name) {
+                localStorage.setItem(`nickname_${roomId}`, name)
+            } else {
+                localStorage.removeItem(`nickname_${roomId}`)
+            }
+        } catch (e) {
+            console.warn('Failed to save nickname to localStorage:', e)
+        }
+    }
+
     useEffect(() => {
         if (!socket) return
 
@@ -37,6 +83,18 @@ export default function PokerRoom() {
             setJoined(true)
             setIsHost(data.isHost)
             setRoomState(data.roomState)
+            // Save sessionToken and nickname for reconnection
+            if (data.sessionToken) {
+                saveSessionToken(data.sessionToken)
+            }
+            // Extract and save nickname from roomState
+            if (data.roomState?.players) {
+                const myPlayer = data.roomState.players.find(p => p.socketId === socket.id)
+                if (myPlayer?.nickname) {
+                    saveNickname(myPlayer.nickname)
+                    setNickname(myPlayer.nickname) // Update state with stored nickname
+                }
+            }
         })
 
         socket.on('room-state', (state) => {
@@ -129,6 +187,21 @@ export default function PokerRoom() {
             }
         })
 
+        // Handle socket reconnection - automatically rejoin with stored sessionToken
+        socket.on('connect', () => {
+            if (joined && nickname.trim()) {
+                const sessionToken = getSessionToken()
+                const buyin = parseInt(buyinAmount, 10) || 1000
+                console.log('Socket reconnected, rejoining room with sessionToken:', sessionToken)
+                socket.emit('join-room', {
+                    roomId,
+                    nickname: nickname.trim(),
+                    buyinAmount: buyin,
+                    sessionToken: sessionToken
+                })
+            }
+        })
+
         return () => {
             socket.off('room-joined')
             socket.off('room-state')
@@ -142,8 +215,9 @@ export default function PokerRoom() {
             socket.off('hand-complete')
             socket.off('chat-message')
             socket.off('error')
+            socket.off('connect')
         }
-    }, [socket])
+    }, [socket, joined, nickname, buyinAmount, roomId])
 
 
 
@@ -155,15 +229,38 @@ export default function PokerRoom() {
         }
     }, [roomState, socket])
 
+    // Attempt to auto-rejoin on mount if we have a stored sessionToken and nickname
+    useEffect(() => {
+        if (!socket || joined || !socket.connected) return
+
+        const sessionToken = getSessionToken()
+        const storedNickname = getStoredNickname()
+        
+        if (sessionToken && storedNickname) {
+            // We have both token and nickname, automatically reconnect
+            // Note: buyinAmount is not needed for reconnection as server uses existing player's stack
+            console.log('Auto-reconnecting with sessionToken:', sessionToken, 'nickname:', storedNickname)
+            setNickname(storedNickname)
+            socket.emit('join-room', {
+                roomId,
+                nickname: storedNickname,
+                buyinAmount: 1000, // Default, won't be used if player already exists
+                sessionToken: sessionToken
+            })
+        }
+    }, [socket, joined, roomId])
+
     const handleJoinRoom = (e) => {
         e.preventDefault()
         if (nickname.trim() && socket) {
             const buyin = parseInt(buyinAmount, 10) || 1000
-            console.log('Joining room with buyin:', buyin)
+            const sessionToken = getSessionToken()
+            console.log('Joining room with buyin:', buyin, 'sessionToken:', sessionToken)
             socket.emit('join-room', {
                 roomId,
                 nickname: nickname.trim(),
-                buyinAmount: buyin
+                buyinAmount: buyin,
+                sessionToken: sessionToken
             })
         }
     }
