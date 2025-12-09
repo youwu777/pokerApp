@@ -299,7 +299,7 @@
     font-size: 0.65rem;
     font-weight: 700;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-    z-index: 6;
+    z-index: 2;
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 

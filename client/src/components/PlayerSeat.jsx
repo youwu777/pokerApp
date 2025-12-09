@@ -1,7 +1,8 @@
 import { useState, useRef } from 'react'
 import PlayingCard from './PlayingCard'
 import ThrowItemMenu from './ThrowItemMenu'
-import catImage from '../image/image.png'
+// Image is in public folder, reference as static asset
+const catImage = '/image.png'
 import './PlayerSeat.css'
 
 export default function PlayerSeat({

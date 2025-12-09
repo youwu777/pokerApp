@@ -590,7 +590,7 @@ export class PokerGame {
 
         // Sort players by total contribution (use totalContribution which tracks entire hand)
         const sorted = [...players].sort((a, b) => a.totalContribution - b.totalContribution);
-        
+
         console.log(`[SIDE-POT] Calculating side pots. Total pot: ${this.pot}`);
         console.log(`[SIDE-POT] Player contributions:`, sorted.map(p => `${p.nickname}: ${p.totalContribution}`).join(', '));
 
@@ -610,12 +610,14 @@ export class PokerGame {
             const potSize = contributionAtThisLevel * eligiblePlayers.length;
 
             if (potSize > 0) {
+                const potAmount = Math.min(potSize, remainingPot);
                 this.sidePots.push({
-                    amount: Math.min(potSize, remainingPot),
+                    amount: potAmount,
                     eligiblePlayers: eligiblePlayers
                 });
 
-                remainingPot -= potSize;
+                // Fix: Decrement by actual amount added, not calculated potSize
+                remainingPot -= potAmount;
             }
         }
 
@@ -627,6 +629,26 @@ export class PokerGame {
                 eligiblePlayers: players
             });
         }
+
+        // Handle dead money (from folded players)
+        // Any remaining pot that wasn't allocated to side pots should go to the first (main) pot
+        const totalSidePots = this.sidePots.reduce((sum, pot) => sum + pot.amount, 0);
+        const deadMoney = this.pot - totalSidePots;
+        if (deadMoney > 0.01 && this.sidePots.length > 0) {
+            console.log(`[SIDE-POT] Dead money from folded players: $${deadMoney.toFixed(2)} - adding to main pot`);
+            this.sidePots[0].amount += deadMoney;
+        }
+
+        // Validation: Ensure side pots sum equals total pot (after adding dead money)
+        const finalTotalSidePots = this.sidePots.reduce((sum, pot) => sum + pot.amount, 0);
+        if (Math.abs(finalTotalSidePots - this.pot) > 0.01) {
+            console.error(`[ERROR] Side pot calculation mismatch! Side pots total: ${finalTotalSidePots}, Actual pot: ${this.pot}`);
+            console.error(`[ERROR] Side pots:`, this.sidePots.map(p => `${p.amount} (${p.eligiblePlayers.map(pl => pl.nickname).join(',')})`));
+        }
+
+        console.log(`[SIDE-POT] Created ${this.sidePots.length} pot(s):`,
+            this.sidePots.map((p, idx) => `Pot ${idx + 1}: $${p.amount} (${p.eligiblePlayers.map(pl => pl.nickname).join(', ')})`).join(' | ')
+        );
     }
 
     /**
@@ -762,6 +784,14 @@ export class PokerGame {
         const potResults = [];
         console.log(`[POT] Total pot: ${this.pot}, Side pots: ${this.sidePots.length}`);
         for (const sidePot of this.sidePots) {
+            // Validate that all eligible players have hole cards
+            const invalidPlayers = sidePot.eligiblePlayers.filter(p => !p.holeCards || p.holeCards.length !== 2);
+            if (invalidPlayers.length > 0) {
+                console.error(`[ERROR] Players without valid hole cards:`, invalidPlayers.map(p => p.nickname));
+                // Skip these players from the pot
+                sidePot.eligiblePlayers = sidePot.eligiblePlayers.filter(p => p.holeCards && p.holeCards.length === 2);
+            }
+
             const potPlayerHands = sidePot.eligiblePlayers.map(player => ({
                 player,
                 hand: HandEvaluator.evaluateHand(player.holeCards, this.communityCards)
@@ -771,16 +801,42 @@ export class PokerGame {
             const sharePerWinner = Math.floor(sidePot.amount / winners.length);
             const remainder = sidePot.amount - (sharePerWinner * winners.length); // Handle rounding
 
-            console.log(`[POT] Side pot: ${sidePot.amount}, Winners: ${winners.map(w => w.nickname).join(', ')}, Share: ${sharePerWinner}`);
+            console.log(`[POT] Side pot: ${sidePot.amount}, Winners: ${winners.map(w => w.nickname).join(', ')}, Share: ${sharePerWinner}, Remainder: ${remainder}`);
 
+            // Award chips to winners
             for (const winner of winners) {
                 const chipsBefore = winner.chips;
                 winner.chips += sharePerWinner;
-                // Award remainder to first winner (standard poker rule)
-                if (winner === winners[0] && remainder > 0) {
-                    winner.chips += remainder;
-                }
-                console.log(`[POT] ${winner.nickname}: ${chipsBefore} -> ${winner.chips} (+${sharePerWinner + (winner === winners[0] ? remainder : 0)})`);
+                console.log(`[POT] ${winner.nickname}: ${chipsBefore} -> ${winner.chips} (+${sharePerWinner})`);
+            }
+
+            // Award odd chips to winner closest to left of button (standard poker rule)
+            if (remainder > 0 && winners.length > 0) {
+                // Find the dealer index in the full players list
+                const dealerIdx = this.players.findIndex(p => p.seatNumber === this.lastDealerSeat);
+
+                // Sort winners by their position relative to dealer (clockwise from dealer)
+                const winnersWithPosition = winners.map(winner => {
+                    const winnerIdx = this.players.indexOf(winner);
+                    // Calculate distance from dealer (clockwise)
+                    // Distance 0 = dealer, 1 = first player left of dealer, etc.
+                    const distance = (winnerIdx - dealerIdx + this.players.length) % this.players.length;
+                    return { winner, distance, winnerIdx };
+                });
+
+                // Sort by distance, but prefer distance > 0 (first player left of button, not button itself)
+                // If all winners have distance 0 (shouldn't happen), take the first
+                winnersWithPosition.sort((a, b) => {
+                    // If one has distance 0 and other doesn't, prefer the non-zero
+                    if (a.distance === 0 && b.distance !== 0) return 1;
+                    if (a.distance !== 0 && b.distance === 0) return -1;
+                    // Otherwise sort by distance ascending
+                    return a.distance - b.distance;
+                });
+
+                const oddChipWinner = winnersWithPosition[0].winner;
+                oddChipWinner.chips += remainder;
+                console.log(`[POT] Odd chip(s) (+${remainder}) awarded to ${oddChipWinner.nickname} (closest to left of button, position ${winnersWithPosition[0].distance})`);
             }
 
             potResults.push({

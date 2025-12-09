@@ -334,7 +334,7 @@
     .seat-0 .current-bet {
         position: absolute;
         top: auto;
-        bottom: -25px;
+        bottom: -45px;
         font-size: 0.65rem;
     }
 
@@ -372,7 +372,7 @@
         left: 45%;
         transform: translateX(-50%);
         font-size: 0.65rem;
-        min-width: 48px;
+        min-width: 40px;
         padding: 2px 8px;
     }
 }
