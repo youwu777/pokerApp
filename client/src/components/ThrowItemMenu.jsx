@@ -69,7 +69,10 @@ export default function ThrowItemMenu({
                         key={item.id}
                         type="button"
                         className="throw-item-btn"
-                        onClick={() => handleItemClick(item)}
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            handleItemClick(item)
+                        }}
                         onMouseDown={(e) => e.stopPropagation()}
                     >
                         <span className="throw-item-emoji">{item.emoji}</span>
