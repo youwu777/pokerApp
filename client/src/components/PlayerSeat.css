@@ -338,11 +338,11 @@
 
 .player-chips {
     color: #fbbf24;
-    font-size: 0.82rem;
+    font-size: 0.85rem;
     font-family: 'Roboto Mono', monospace;
     background: rgba(0, 0, 0, 0.4);
-    padding: 2px 6px;
-    border-radius: 4px;
+    padding: 2px 5px;
+    border-radius: 3px;
     white-space: nowrap;
 }
 
