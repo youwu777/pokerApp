@@ -44,6 +44,25 @@ export default function PokerRoom() {
         }
     }
 
+    const getStoredPlayerId = () => {
+        try {
+            return localStorage.getItem(`playerId_${roomId}`)
+        } catch (e) {
+            console.warn('localStorage not available:', e)
+            return null
+        }
+    }
+
+    const savePlayerId = (id) => {
+        try {
+            if (id) {
+                localStorage.setItem(`playerId_${roomId}`, id)
+            }
+        } catch (e) {
+            console.warn('Failed to save playerId to localStorage:', e)
+        }
+    }
+
     // Get stored nickname from localStorage
     const getStoredNickname = () => {
         try {
@@ -91,9 +110,12 @@ export default function PokerRoom() {
             setCheckingRoom(false) // Room check complete, we're joined
             // Prime myPlayer immediately to avoid timing gaps for UI that depends on it
             if (data.roomState?.players) {
-                const me = data.roomState.players.find(p => p.socketId === socket.id)
+                const me = data.roomState.players.find(p => p.socketId === socket.id) ||
+                    data.roomState.players.find(p => p.sessionToken === getSessionToken()) ||
+                    data.roomState.players.find(p => p.playerId && p.playerId === getStoredPlayerId())
                 if (me) {
                     setMyPlayer(me)
+                    if (me.playerId) savePlayerId(me.playerId)
                 }
             }
             // Load chat history from room state if available
@@ -260,8 +282,15 @@ export default function PokerRoom() {
     // Update myPlayer when roomState changes
     useEffect(() => {
         if (roomState && socket) {
+            const sessionToken = getSessionToken()
+            const storedPlayerId = getStoredPlayerId()
             const player = roomState.players.find(p => p.socketId === socket.id)
-            setMyPlayer(player)
+                || roomState.players.find(p => p.sessionToken && p.sessionToken === sessionToken)
+                || roomState.players.find(p => p.playerId && p.playerId === storedPlayerId)
+            if (player) {
+                setMyPlayer(player)
+                if (player.playerId) savePlayerId(player.playerId)
+            }
         }
     }, [roomState, socket])
 
@@ -369,11 +398,8 @@ export default function PokerRoom() {
     }
 
     const handleThrowItem = (item, targetPlayer) => {
-        if (!socket || !myPlayer || !targetPlayer) return
+        if (!socket || !targetPlayer) return
         
-        // Can't throw at yourself
-        if (targetPlayer.socketId === myPlayer.socketId) return
-
         console.log('[THROW] emitting', { item: item.id, targetPlayerId: targetPlayer.playerId, targetSocketId: targetPlayer.socketId })
 
         // Emit throw item event
