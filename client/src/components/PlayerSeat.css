@@ -51,9 +51,19 @@
         right: -7px;
     }
 
+    .current-bet-container {
+        top: -20px;
+        gap: 6px;
+    }
+    
     .current-bet {
         font-size: 0.65rem;
         padding: 1px 6px;
+    }
+    
+    .player-badges .badge {
+        font-size: 0.6rem;
+        padding: 1px 4px;
     }
 }
 
@@ -233,17 +243,24 @@
     border: 1px solid #059669;
 }
 
-.current-bet {
+.current-bet-container {
     position: absolute;
     top: -25px;
-    /* Move bet above seat */
+    /* Move container above seat */
     left: 50%;
     transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 15;
+    pointer-events: none;
+}
+
+.current-bet {
     background: rgba(0, 0, 0, 0.85);
     padding: 2px 8px;
     border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.2);
-    z-index: 15;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
@@ -258,16 +275,10 @@
 }
 
 .player-badges {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
     display: flex;
     flex-direction: column;
     gap: 2px;
     pointer-events: none;
-    z-index: 25;
-    /* Ensure badges are on top of cards */
 }
 
 .badge {

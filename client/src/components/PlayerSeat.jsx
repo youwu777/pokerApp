@@ -124,24 +124,28 @@ export default function PlayerSeat({
                 </div>
             )}
 
-            {/* Current Bet */}
-            {player.currentBet > 0 && !isWaiting && (
-                <div className="current-bet">
-                    <div className="bet-chips mono">${player.currentBet}</div>
+            {/* Current Bet with Action Badges */}
+            {!isWaiting && (
+                <div className="current-bet-container">
+                    {/* Status Badges - Left side */}
+                    <div className="player-badges">
+                        {isAllIn && <div className="badge all-in-badge">ALL IN</div>}
+                        {player.lastAction && !isFolded && !isAllIn &&
+                            player.lastAction !== 'small blind' && player.lastAction !== 'big blind' && player.lastAction !== 'all-in' && (
+                                <div className="badge action-badge">{player.lastAction.toUpperCase()}</div>
+                            )}
+                        {isStandingUpNext && (
+                            <div className="badge stand-up-badge">LEAVING NEXT</div>
+                        )}
+                    </div>
+                    {/* Betting Size - Right side */}
+                    {player.currentBet > 0 && (
+                        <div className="current-bet">
+                            <div className="bet-chips mono">${player.currentBet}</div>
+                        </div>
+                    )}
                 </div>
             )}
-
-            {/* Status Badges */}
-            <div className="player-badges">
-                {isAllIn && <div className="badge all-in-badge">ALL IN</div>}
-                {player.lastAction && !isFolded && !isWaiting &&
-                    player.lastAction !== 'small blind' && player.lastAction !== 'big blind' && (
-                        <div className="badge action-badge">{player.lastAction.toUpperCase()}</div>
-                    )}
-                {isStandingUpNext && (
-                    <div className="badge stand-up-badge">LEAVING NEXT</div>
-                )}
-            </div>
 
             {/* Stand Up (only for me) */}
             {isMe && (
