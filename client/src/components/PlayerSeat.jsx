@@ -281,7 +281,11 @@ export default function PlayerSeat({
 
             {/* Inline fallback menu to guarantee access if popup is off-screen */}
             {showThrowMenu && (
-                <div className="throw-menu-inline-fallback" onClick={(e) => e.stopPropagation()}>
+                <div
+                    className="throw-menu-inline-fallback"
+                    onClick={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => e.stopPropagation()}
+                >
                     <div className="fallback-title">Throw at {player.nickname}</div>
                     <div className="fallback-buttons">
                         {[
@@ -294,7 +298,11 @@ export default function PlayerSeat({
                                 key={item.id}
                                 type="button"
                                 className="fallback-throw-btn"
-                                onClick={() => handleItemSelect({ id: item.id })}
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleItemSelect({ id: item.id })
+                                }}
+                                onMouseDown={(e) => e.stopPropagation()}
                             >
                                 {item.label}
                             </button>

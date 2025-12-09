@@ -58,6 +58,7 @@ export default function ThrowItemMenu({
             className="throw-item-menu"
             style={menuStyle}
             onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
         >
             <div className="throw-item-menu-header">
                 <span>Throw at {targetPlayer.nickname}</span>
