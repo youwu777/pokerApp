@@ -9,6 +9,7 @@
     background: transparent;
     border-radius: 12px;
     border: none;
+    box-shadow: none !important;
     transition: all 0.3s ease;
     padding: 6px;
     box-sizing: border-box;
@@ -339,10 +340,10 @@
 
 .player-chips {
     color: #fbbf24;
-    font-size: 0.85rem;
+    font-size: 0.7rem;
     font-family: 'Roboto Mono', monospace;
     background: rgba(0, 0, 0, 0.4);
-    padding: 2px 5px;
+    padding: 1px 4px;
     border-radius: 3px;
     white-space: nowrap;
 }
