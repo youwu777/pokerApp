@@ -1,7 +1,7 @@
 .player-seat {
     position: relative;
-    width: 120px;
-    height: 90px;
+    width: 140px;
+    height: 100px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -10,7 +10,7 @@
     border-radius: 12px;
     border: 2px solid rgba(255, 255, 255, 0.1);
     transition: all 0.3s ease;
-    padding: 4px;
+    padding: 6px;
     box-sizing: border-box;
 }
 
@@ -20,13 +20,13 @@
 }
 
 .cat-seat {
-    background-size: 80%;
+    background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
     background-color: transparent;
     border: none;
     box-shadow: none;
-    padding: 4px;
+    padding: 6px;
 }
 
 .btn-throw-item {
@@ -105,8 +105,8 @@
 
 @media (max-width: 768px) {
     .player-seat {
-        width: 80px;
-        height: 64px;
+        width: 90px;
+        height: 70px;
         padding: 3px;
         border-width: 1.5px;
         border-radius: 8px;
