@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import './ItemAnimation.css'
 
 const ITEM_EMOJIS = {
     tomato: '🍅',
     egg: '🥚',
     flipflops: '🩴',
-    boom: '💥'
+    boom: '💣'
 }
 
 export default function ItemAnimation({ 
@@ -16,42 +16,44 @@ export default function ItemAnimation({
 }) {
     const [position, setPosition] = useState(fromPosition)
     const [rotation, setRotation] = useState(0)
+    const rafRef = useRef(null)
 
     useEffect(() => {
         if (!fromPosition || !toPosition) return
 
-        const startTime = Date.now()
+        const startTime = performance.now()
         const duration = 2000 // 2 seconds
         const startX = fromPosition.x
         const startY = fromPosition.y
         const deltaX = toPosition.x - startX
         const deltaY = toPosition.y - startY
 
-        const animate = () => {
-            const elapsed = Date.now() - startTime
-            const progress = Math.min(elapsed / duration, 1)
+        const easeOutQuad = (t) => 1 - (1 - t) * (1 - t)
 
-            // Linear interpolation for position
+        const animate = (now) => {
+            const elapsed = now - startTime
+            const linearProgress = Math.min(elapsed / duration, 1)
+            const progress = easeOutQuad(linearProgress)
+
             const currentX = startX + deltaX * progress
             const currentY = startY + deltaY * progress
-
-            // Rotation (spinning) - 2 full rotations over the duration
             const currentRotation = 360 * progress * 2
 
             setPosition({ x: currentX, y: currentY })
             setRotation(currentRotation)
 
-            if (progress < 1) {
-                requestAnimationFrame(animate)
-            } else {
-                // Animation complete
-                if (onComplete) {
-                    onComplete()
-                }
+            if (linearProgress < 1) {
+                rafRef.current = requestAnimationFrame(animate)
+            } else if (onComplete) {
+                onComplete()
             }
         }
 
-        requestAnimationFrame(animate)
+        rafRef.current = requestAnimationFrame(animate)
+
+        return () => {
+            if (rafRef.current) cancelAnimationFrame(rafRef.current)
+        }
     }, [fromPosition, toPosition, onComplete])
 
     if (!position) return null
