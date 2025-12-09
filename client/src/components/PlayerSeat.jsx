@@ -92,7 +92,8 @@ export default function PlayerSeat({
         if (rect) {
             const position = {
                 x: rect.left + rect.width / 2,
-                y: rect.top - 10
+                // Drop the menu below the seat so it stays visible on mobile/top rows
+                y: rect.bottom + 8
             }
             console.log('Setting menu position:', position)
             setMenuPosition(position)
