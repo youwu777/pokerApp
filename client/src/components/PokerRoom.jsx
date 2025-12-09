@@ -223,8 +223,8 @@ export default function PokerRoom() {
         })
 
         socket.on('item-thrown', ({ fromPlayerId, targetPlayerId, fromSocketId, targetSocketId, itemId }) => {
-            // Trigger animation
-            const animationId = `${fromPlayerId}-${targetPlayerId}-${Date.now()}`
+            // Trigger animation with a robust unique id
+            const animationId = (crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`)
             setActiveAnimations(prev => [...prev, {
                 id: animationId,
                 item: { id: itemId },
