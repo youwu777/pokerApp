@@ -270,15 +270,19 @@ export default function PlayerSeat({
             )}
 
             {/* Impact Mark */}
-            {impactMark && (
-                <div className={`impact-mark impact-${impactMark.item}`}>
+            {impactMarks && impactMarks.length > 0 && impactMarks.map((impactMark, idx) => (
+                <div
+                    key={impactMark.id || idx}
+                    className={`impact-mark impact-${impactMark.item}`}
+                    style={{ transform: `translate(-50%, -50%) translate(${idx * 6}px, ${-idx * 6}px)` }}
+                >
                     {/* Distinct impact icons (not the thrown item itself) */}
                     {impactMark.item === 'tomato' && '💥'}
                     {impactMark.item === 'egg' && '🐣'}
                     {impactMark.item === 'flipflops' && '🩴'}
                     {impactMark.item === 'boom' && '💥'}
                 </div>
-            )}
+            ))}
 
             {/* Inline fallback menu to guarantee access if popup is off-screen */}
             {showThrowMenu && (

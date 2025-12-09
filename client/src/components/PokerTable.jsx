@@ -95,7 +95,7 @@ export default function PokerTable({
                                 isViewerSeated={isViewerSeated}
                                 myPlayer={myPlayer}
                                 onThrowItem={onThrowItem}
-                                impactMark={impactMarks?.[player?.playerId] || impactMarks?.[player?.socketId]}
+                                impactMarks={impactMarks?.[player?.playerId] || impactMarks?.[player?.socketId] || []}
                             />
                         </div>
                     );

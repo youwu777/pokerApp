@@ -662,19 +662,37 @@ export default function PokerRoom() {
                         roomState={roomState}
                         onComplete={() => {
                             setActiveAnimations(prev => prev.filter(a => a.id !== animation.id))
-                            // Show impact mark
-                            setImpactMarks(prev => ({
-                                ...prev,
-                                [animation.targetPlayerId]: { item: animation.item.id, timestamp: Date.now() },
-                                ...(animation.targetSocketId ? { [animation.targetSocketId]: { item: animation.item.id, timestamp: Date.now() } } : {})
-                            }))
-                            // Remove impact mark after 4 seconds
+
+                            const markId = `${animation.id}-mark`
+                            // Show impact mark (allow multiple marks per player)
+                            setImpactMarks(prev => {
+                                const next = { ...prev }
+                                const pushMark = (key) => {
+                                    const arr = next[key] ? [...next[key]] : []
+                                    arr.push({ id: markId, item: animation.item.id, timestamp: Date.now() })
+                                    next[key] = arr
+                                }
+                                pushMark(animation.targetPlayerId)
+                                if (animation.targetSocketId) pushMark(animation.targetSocketId)
+                                return next
+                            })
+
+                            // Remove this specific impact mark after 4 seconds
                             setTimeout(() => {
                                 setImpactMarks(prev => {
-                                    const newMarks = { ...prev }
-                                    delete newMarks[animation.targetPlayerId]
-                                    if (animation.targetSocketId) delete newMarks[animation.targetSocketId]
-                                    return newMarks
+                                    const next = { ...prev }
+                                    const removeMark = (key) => {
+                                        if (!next[key]) return
+                                        const filtered = next[key].filter(m => m.id !== markId)
+                                        if (filtered.length === 0) {
+                                            delete next[key]
+                                        } else {
+                                            next[key] = filtered
+                                        }
+                                    }
+                                    removeMark(animation.targetPlayerId)
+                                    if (animation.targetSocketId) removeMark(animation.targetSocketId)
+                                    return next
                                 })
                             }, 4000)
                         }}
