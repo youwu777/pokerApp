@@ -150,6 +150,12 @@ export function setupSocketHandlers(io, socket) {
         const player = room.getPlayer(socket.id);
         if (!player) return;
 
+        // Check if player has stack to sit down
+        if (player.stack === 0) {
+            socket.emit('error', { message: 'Cannot sit down with 0 stack. Please request a buy-in first.' });
+            return;
+        }
+
         // Check if seat is available
         const seatTaken = room.players.some(p => p.seatNumber === seatNumber);
         if (seatTaken) {
@@ -628,14 +634,26 @@ export function setupSocketHandlers(io, socket) {
             return;
         }
 
-        // Remove from pending and add to approved (to be processed at next hand)
+        // Remove from pending
         room.pendingBuyIns.delete(requestId);
         
-        // Add to approved buy-ins (accumulate if player already has approved buy-in)
-        const existingApproved = room.approvedBuyIns.get(request.playerId) || 0;
-        room.approvedBuyIns.set(request.playerId, existingApproved + request.amount);
-
-        console.log(`[BUYIN] Owner approved ${request.nickname}'s buy-in of $${request.amount}`);
+        // If player is not seated, update stack immediately
+        if (player.seatNumber === null) {
+            console.log(`[BUYIN] Owner approved ${request.nickname}'s buy-in of $${request.amount} (not seated - updating immediately)`);
+            player.stack += request.amount;
+            player.buyin += request.amount;
+            
+            // Update scoreboard
+            upsertScoreboard(room, player, true);
+            
+            // Notify all players of updated room state
+            io.to(room.id).emit('room-state', room.toJSON());
+        } else {
+            // Player is seated, add to approved buy-ins (to be processed at next hand)
+            const existingApproved = room.approvedBuyIns.get(request.playerId) || 0;
+            room.approvedBuyIns.set(request.playerId, existingApproved + request.amount);
+            console.log(`[BUYIN] Owner approved ${request.nickname}'s buy-in of $${request.amount} (seated - will process at next hand)`);
+        }
 
         // Notify player
         const playerSocket = io.sockets.sockets.get(request.playerId);

@@ -37,7 +37,7 @@ export default function Lobby() {
                 <div className="lobby-header">
                     <h1 className="lobby-title">
                         <span className="title-icon">🃏</span>
-                        Poker with M8s
+                        Honest Poker
                     </h1>
                     <p className="lobby-subtitle">
                         Private Texas Hold'em • Play with Friends
