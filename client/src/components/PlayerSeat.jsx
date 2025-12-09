@@ -142,10 +142,14 @@ export default function PlayerSeat({
         })
     }
 
+    const impactClass = impactMarks && impactMarks.length > 0
+        ? `impact-${impactMarks[impactMarks.length - 1].item}`
+        : ''
+
     return (
         <div 
             ref={seatRef}
-            className={`player-seat ${isMe ? 'my-seat' : ''} ${isCurrentPlayer ? 'active-turn' : ''} ${isFolded ? 'folded' : ''} ${isWaiting ? 'waiting' : ''} ${isWinner ? 'winner' : ''} ${impactMark ? `impact-${impactMark.item}` : ''}`}
+            className={`player-seat ${isMe ? 'my-seat' : ''} ${isCurrentPlayer ? 'active-turn' : ''} ${isFolded ? 'folded' : ''} ${isWaiting ? 'waiting' : ''} ${isWinner ? 'winner' : ''} ${impactClass}`}
             onClick={openThrowMenu}
             data-player-id={player?.playerId || player?.socketId}
             data-socket-id={player?.socketId}
