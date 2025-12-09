@@ -432,6 +432,22 @@
     font-weight: bold;
 }
 
+@media (max-width: 768px) {
+    /* Let table-level positioning drive bet placement on mobile */
+    .current-bet-container {
+        position: static;
+        top: auto;
+        left: auto;
+        transform: none;
+        justify-content: center;
+        gap: 4px;
+    }
+
+    .current-bet {
+        padding: 2px 6px;
+    }
+}
+
 .player-badges {
     display: flex;
     flex-direction: column;

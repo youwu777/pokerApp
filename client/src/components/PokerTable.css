@@ -177,36 +177,7 @@
 }
 
 /* Bet Positioning Overrides */
-
-/* Bottom Row (Seats 0-3) - Bet ON TOP */
-.seat-0 .current-bet,
-.seat-1 .current-bet,
-.seat-2 .current-bet,
-.seat-3 .current-bet {
-    top: -35px;
-    bottom: auto;
-}
-
-/* Top Row (Seats 5-8) - Bet UNDER (Default is usually bottom, but let's be explicit) */
-.seat-5 .current-bet,
-.seat-6 .current-bet,
-.seat-7 .current-bet,
-.seat-8 .current-bet {
-    bottom: -35px;
-    top: auto;
-}
-
-/* Left Side (Seat 4) - Bet on RIGHT */
-/* Note: Seat 4 is Left side in previous step's CSS comments, let's verify */
-/* Previous CSS: .seat-4 { left: -65px } -> This is LEFT side. */
-/* User request: "player on left side display on right side" */
-.seat-4 .current-bet {
-    left: 140px;
-    right: auto;
-    top: 50%;
-    bottom: auto;
-    transform: translateY(-50%);
-}
+/* Desktop overrides trimmed; mobile block below handles mobile layout */
 
 /* Right Side (Seat 9) - Bet on LEFT */
 /* Previous CSS: .seat-9 { right: -65px } -> This is RIGHT side. */
@@ -290,28 +261,28 @@
 
     /* Left Side - 4 players (seats 1-4) stacked vertically */
     .seat-1 {
-        top: 10%;
+        top: 7%;
         left: -48px;
         transform: translateY(-50%);
         bottom: auto;
     }
 
     .seat-2 {
-        top: 27%;
+        top: 30%;
         left: -48px;
         transform: translateY(-50%);
         bottom: auto;
     }
 
     .seat-3 {
-        top: 50%;
+        top: 55%;
         left: -48px;
         transform: translateY(-50%);
         bottom: auto;
     }
 
     .seat-4 {
-        top: 73%;
+        top: 70%;
         left: -48px;
         transform: translateY(-50%);
         bottom: auto;
@@ -319,7 +290,7 @@
 
     /* Right Side - 4 players (seats 5-8) stacked vertically */
     .seat-5 {
-        top: 10%;
+        top: 7%;
         right: -48px;
         left: auto;
         transform: translateY(-50%);
@@ -327,7 +298,7 @@
     }
 
     .seat-6 {
-        top: 27%;
+        top: 30%;
         right: -48px;
         left: auto;
         transform: translateY(-50%);
@@ -335,7 +306,7 @@
     }
 
     .seat-7 {
-        top: 50%;
+        top: 55%;
         right: -48px;
         left: auto;
         transform: translateY(-50%);
@@ -343,7 +314,7 @@
     }
 
     .seat-8 {
-        top: 73%;
+        top: 70%;
         right: -48px;
         left: auto;
         transform: translateY(-50%);
@@ -366,12 +337,13 @@
         font-size: 0.65rem;
     }
 
+    /* Keep bet labels close to the seat toward table center */
     .seat-1 .current-bet,
     .seat-2 .current-bet,
     .seat-3 .current-bet,
     .seat-4 .current-bet {
-        left: 95px;
-        right: auto;
+        left: auto;
+        right: -8px;
         top: 50%;
         bottom: auto;
         transform: translateY(-50%);
@@ -382,8 +354,8 @@
     .seat-6 .current-bet,
     .seat-7 .current-bet,
     .seat-8 .current-bet {
-        right: 95px;
-        left: auto;
+        right: auto;
+        left: -8px;
         top: 50%;
         bottom: auto;
         transform: translateY(-50%);
