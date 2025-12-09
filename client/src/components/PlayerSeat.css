@@ -54,7 +54,8 @@
     color: var(--color-text);
     font-size: 14px;
     transition: all 0.2s ease;
-    z-index: 2;
+    z-index: 20;
+    pointer-events: auto;
 }
 
 .btn-throw-item:hover {
