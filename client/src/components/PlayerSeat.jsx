@@ -18,7 +18,7 @@ export default function PlayerSeat({
     isViewerSeated,
     myPlayer,
     onThrowItem,
-    impactMark
+    impactMarks = []
 }) {
     const [showThrowMenu, setShowThrowMenu] = useState(false)
     const [menuPosition, setMenuPosition] = useState(null)
