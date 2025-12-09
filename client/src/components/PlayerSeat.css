@@ -6,9 +6,9 @@
     flex-direction: column;
     align-items: center;
     justify-content: space-between;
-    background: rgba(0, 0, 0, 0.75);
+    background: transparent;
     border-radius: 12px;
-    border: 2px solid rgba(255, 255, 255, 0.1);
+    border: none;
     transition: all 0.3s ease;
     padding: 6px;
     box-sizing: border-box;
@@ -20,13 +20,20 @@
 }
 
 .cat-seat {
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-color: transparent;
+    background: transparent;
     border: none;
     box-shadow: none;
     padding: 6px;
+}
+
+.cat-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointer-events: none;
+    z-index: 0;
 }
 
 .btn-throw-item {

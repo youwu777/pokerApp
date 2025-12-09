@@ -156,9 +156,10 @@ export default function PlayerSeat({
             data-socket-id={player?.socketId}
             style={{ 
                 cursor: myPlayer && myPlayer.seatNumber !== null && !isMe ? 'pointer' : 'default',
-                backgroundImage: `url(${catImage})`
+                backgroundImage: 'none'
             }}
         >
+            <img className="cat-bg" src={catImage} alt="Player background" />
             {/* Timer Progress Bar */}
             {showTimer && (
                 <div className="seat-timer-container">
