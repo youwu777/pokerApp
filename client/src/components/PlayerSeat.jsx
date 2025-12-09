@@ -69,7 +69,16 @@ export default function PlayerSeat({
     const isTimeBank = showTimer && timerState.usingTimeBank;
 
     const openThrowMenu = (e) => {
-        console.log('Seat clicked:', { isMe, hasMyPlayer: !!myPlayer, mySeatNumber: myPlayer?.seatNumber, hasPlayer: !!player, playerSocketId: player?.socketId, mySocketId: myPlayer?.socketId })
+        console.log('Seat clicked:', {
+            isMe,
+            hasMyPlayer: !!myPlayer,
+            mySeatNumber: myPlayer?.seatNumber,
+            hasPlayer: !!player,
+            playerSocketId: player?.socketId,
+            playerId: player?.playerId,
+            mySocketId: myPlayer?.socketId,
+            myPlayerId: myPlayer?.playerId
+        })
         
         // Only show throw menu if clicking on another player and we have myPlayer
         if (isMe || !myPlayer || !player) {
@@ -78,7 +87,7 @@ export default function PlayerSeat({
         }
         
         // Don't show menu if clicking on myself
-        if (player.socketId === myPlayer.socketId) {
+        if (player.socketId === myPlayer.socketId || player.playerId === myPlayer.playerId) {
             console.log('Menu blocked - same player')
             return
         }
@@ -99,7 +108,12 @@ export default function PlayerSeat({
             setMenuPosition(position)
             setShowThrowMenu(true)
         } else {
-            console.log('No rect found')
+            console.log('No rect found, using viewport center fallback')
+            setMenuPosition({
+                x: window.innerWidth / 2,
+                y: window.innerHeight / 2
+            })
+            setShowThrowMenu(true)
         }
     }
 
@@ -232,7 +246,7 @@ export default function PlayerSeat({
             )}
 
             {/* Throw button overlay for clarity */}
-            {!isMe && myPlayer && myPlayer.seatNumber !== null && (
+            {!isMe && myPlayer && (
                 <button
                     className="btn-throw-item"
                     onClick={(e) => {
