@@ -572,11 +572,7 @@ export class PokerGame {
                         const stats = this.room.scoreboard.get(key);
                         stats.stack = player.stack;
                     }
-                    // Auto-stand-up players with 0 stack
-                    if (player.stack === 0) {
-                        player.standUp();
-                        console.log(`[AUTO-STANDUP] ${player.nickname} forced to stand up (0 stack)`);
-                    }
+                    // Note: Players with 0 stack will be auto-standup before the next hand starts (in handlers.js)
                 }
             });
             this.room.handCount++;
@@ -801,7 +797,7 @@ export class PokerGame {
                 socketId: player.socketId,
                 nickname: player.nickname,
                 hand: shouldShow ? hand.descr : null,
-                holeCards: shouldShow ? player.holeCards : null, // Only send cards if shown
+                holeCards: player.holeCards, // Always send cards so they remain visible until next hand
                 isMucked: isMucked,
                 isWinner: globalWinners.includes(player),
                 handRank: shouldShow ? hand.name : null
@@ -885,11 +881,7 @@ export class PokerGame {
                     const stats = this.room.scoreboard.get(key);
                     stats.stack = player.stack;
                 }
-                // Auto-stand-up players with 0 stack
-                if (player.stack === 0) {
-                    player.standUp();
-                    console.log(`[AUTO-STANDUP] ${player.nickname} forced to stand up (0 stack)`);
-                }
+                // Note: Players with 0 stack will be auto-standup before the next hand starts (in handlers.js)
             }
         });
 

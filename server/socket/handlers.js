@@ -26,15 +26,15 @@ export function setupSocketHandlers(io, socket) {
         if (!key) return;
         const existing = room.scoreboard.get(key) || {};
         room.scoreboard.set(key, {
+            ...existing, // Spread existing first to preserve other fields
             playerId: key,
             sessionToken: player.sessionToken,
             socketId: player.socketId,
             nickname: player.nickname,
             buyin: player.buyin,
             stack: player.stack,
-            isActive,
-            isConnected: player.isConnected !== false,
-            ...existing
+            isActive, // Set after spread to ensure it's not overridden
+            isConnected: player.isConnected !== false // Set after spread to ensure it's not overridden
         });
     };
 
@@ -409,7 +409,7 @@ export function setupSocketHandlers(io, socket) {
             const cardsBeforeReveal = room.game.communityCards.length;
             const cardsToReveal = result.cardsToReveal;
             
-            // Start revealing cards one by one with 3 second delays
+            // Start revealing cards one by one with 1.5 second delays
             cardsToReveal.forEach((card, index) => {
                 setTimeout(() => {
                     const currentRoom = roomManager.getRoom(room.id);
@@ -497,9 +497,9 @@ export function setupSocketHandlers(io, socket) {
                                     io.to(room.id).emit('error', { message: 'Failed to start next hand' });
                                 }
                             }, 5000);
-                        }, 3000); // Wait 3 seconds after last card before ending hand
+                        }, 1500); // Wait 1.5 seconds after last card before ending hand
                     }
-                }, index * 3000); // 3 second delay between each card
+                }, index * 1500); // 1.5 second delay between each card
             });
             
             return; // Don't continue normal flow
@@ -675,13 +675,15 @@ export function setupSocketHandlers(io, socket) {
             console.log(`[BUYIN] Owner approved ${request.nickname}'s buy-in of $${request.amount} (seated - will process at next hand)`);
         }
 
-        // Notify player
-        const playerSocket = io.sockets.sockets.get(request.playerId);
-        if (playerSocket) {
-            playerSocket.emit('buyin-approved', {
-                requestId,
-                amount: request.amount
-            });
+        // Notify player - use player's socketId, not playerId
+        if (player.socketId) {
+            const playerSocket = io.sockets.sockets.get(player.socketId);
+            if (playerSocket) {
+                playerSocket.emit('buyin-approved', {
+                    requestId,
+                    amount: request.amount
+                });
+            }
         }
 
         // Confirm to owner
@@ -708,15 +710,18 @@ export function setupSocketHandlers(io, socket) {
         // Remove from pending
         room.pendingBuyIns.delete(requestId);
 
+        const player = room.getPlayerById(request.playerId);
         console.log(`[BUYIN] Owner rejected ${request.nickname}'s buy-in of $${request.amount}`);
 
-        // Notify player
-        const playerSocket = io.sockets.sockets.get(request.playerId);
-        if (playerSocket) {
-            playerSocket.emit('buyin-rejected', {
-                requestId,
-                amount: request.amount
-            });
+        // Notify player - use player's socketId, not playerId
+        if (player && player.socketId) {
+            const playerSocket = io.sockets.sockets.get(player.socketId);
+            if (playerSocket) {
+                playerSocket.emit('buyin-rejected', {
+                    requestId,
+                    amount: request.amount
+                });
+            }
         }
 
         // Confirm to owner

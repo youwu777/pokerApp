@@ -1,6 +1,5 @@
 import { useState, useRef, useMemo } from 'react'
 import PlayingCard from './PlayingCard'
-import ThrowItemMenu from './ThrowItemMenu'
 import './PlayerSeat.css'
 
 // Dynamically import all images from src/image folder using Vite's glob
@@ -86,8 +85,11 @@ export default function PlayerSeat({
     if (showdownHand) {
         if (showdownHand.isMucked) {
             isMucked = true;
-            // Still show own cards even if mucked (visible only to player)
-            if (isMe && holeCards.length > 0) {
+            // Show cards even if mucked - they remain visible until next hand
+            if (showdownHand.holeCards && showdownHand.holeCards.length > 0) {
+                cardsToShow = showdownHand.holeCards;
+            } else if (isMe && holeCards.length > 0) {
+                // Fallback to own cards if showdownHand doesn't have them
                 cardsToShow = holeCards;
             }
         } else if (showdownHand.holeCards) {
@@ -297,18 +299,12 @@ export default function PlayerSeat({
             {/* Hole Cards or Mucked Status */}
             {!isWaiting && (
                 <div className="hole-cards-container" onClick={(e) => e.stopPropagation()}>
-                    {isMucked ? (
-                        <div className="mucked-cards">
-                            <span className="text-xs text-gray-400">Mucked</span>
+                    {cardsToShow.length > 0 && (
+                        <div className={`hole-cards ${isFolded ? 'folded' : ''} ${isMucked ? 'mucked' : ''}`}>
+                            {cardsToShow.map((card, i) => (
+                                <PlayingCard key={i} card={card} />
+                            ))}
                         </div>
-                    ) : (
-                        cardsToShow.length > 0 && (
-                            <div className={`hole-cards ${isFolded ? 'folded' : ''}`}>
-                                {cardsToShow.map((card, i) => (
-                                    <PlayingCard key={i} card={card} />
-                                ))}
-                            </div>
-                        )
                     )}
                 </div>
             )}
@@ -423,16 +419,6 @@ export default function PlayerSeat({
                 </div>
             )}
 
-            {/* Throw Item Menu */}
-            {showThrowMenu && menuPosition && (
-                <ThrowItemMenu
-                    targetPlayer={player}
-                    myPlayer={myPlayer}
-                    onItemSelect={handleItemSelect}
-                    onClose={() => setShowThrowMenu(false)}
-                    position={menuPosition}
-                />
-            )}
         </div>
     )
 }

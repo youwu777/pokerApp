@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useSocket } from '../context/SocketContext'
 import PokerTable from './PokerTable'
@@ -11,6 +11,7 @@ import ScoreBoard from './ScoreBoard'
 import ItemAnimation from './ItemAnimation'
 import CoinAnimation from './CoinAnimation'
 import ChatBubble from './ChatBubble'
+import soundManager from '../utils/sounds'
 import './PokerRoom.css'
 
 export default function PokerRoom() {
@@ -23,6 +24,7 @@ export default function PokerRoom() {
     const [joined, setJoined] = useState(false)
     const [roomState, setRoomState] = useState(null)
     const [myPlayer, setMyPlayer] = useState(null)
+    const myPlayerRef = useRef(null) // Ref to track myPlayer for sound effects
     const [isHost, setIsHost] = useState(false)
     const [holeCards, setHoleCards] = useState([])
     const [showdownHands, setShowdownHands] = useState([])
@@ -181,7 +183,7 @@ export default function PokerRoom() {
         socket.on('new-hand', ({ gameState, roomState }) => {
             setRoomState(roomState)
             setShowdownHands([]) // Clear showdown hands
-            setHandWinners([]) // Clear winners
+            setHandWinners([]) // Clear winners - important to clear so coin animation doesn't run during active game
             setVisibleCommunityCards([]) // Reset visible community cards
             // Cards will be set by deal-cards event
         })
@@ -194,6 +196,18 @@ export default function PokerRoom() {
             }
             // Clear timer state when player acts (will be updated by next timer-tick or cleared)
             setTimerState(null)
+            
+            // Play sound if it's your action (use ref to avoid stale closure)
+            const me = myPlayerRef.current
+            if (playerId === socket.id || (me && (playerId === me.socketId || playerId === me.playerId))) {
+                if (action === 'check') {
+                    soundManager.playCheck()
+                } else if (action === 'fold') {
+                    soundManager.playFoldTimeout()
+                } else if (action === 'call' || action === 'bet' || action === 'raise' || action === 'all-in') {
+                    soundManager.playCallRaise()
+                }
+            }
         })
 
         socket.on('card-reveal', ({ card, cardIndex, gameState, roomState }) => {
@@ -212,12 +226,32 @@ export default function PokerRoom() {
         })
 
         socket.on('timer-tick', (data) => {
+            const wasMyTurn = timerState && (timerState.playerId === socket.id || (myPlayerRef.current && (timerState.playerId === myPlayerRef.current.playerId || timerState.playerId === myPlayerRef.current.sessionToken)))
             setTimerState(data)
+            
+            // Play sound when it's your turn
+            const me = myPlayerRef.current
+            const isMyTurn = data.playerId === socket.id || (me && (data.playerId === me.playerId || data.playerId === me.sessionToken))
+            
+            if (isMyTurn) {
+                // Play "your turn" sound only on first tick (when timer starts)
+                if (!wasMyTurn) {
+                    soundManager.playYourTurn()
+                } else {
+                    // Play ticking sound during countdown
+                    soundManager.playTick()
+                }
+            }
         })
 
         socket.on('player-timeout', ({ playerId }) => {
             console.log(`Player ${playerId} timed out`)
             setTimerState(null)
+            // Play sound if it's your timeout (use ref to avoid stale closure)
+            const me = myPlayerRef.current
+            if (playerId === socket.id || (me && (playerId === me.socketId || playerId === me.playerId))) {
+                soundManager.playFoldTimeout()
+            }
         })
 
         socket.on('hand-complete', ({ results, roomState }) => {
@@ -232,10 +266,10 @@ export default function PokerRoom() {
                 setShowdownHands(results.revealedHands)
             }
             // Store winners for coin animation (works for both showdown and non-showdown)
-            if (results.winners) {
+            // Only set winners if hand is actually complete (bettingRound should be null)
+            if (results.winners && !roomState?.gameState?.bettingRound) {
                 setHandWinners(results.winners)
             }
-            console.log('Hand complete:', results)
         })
 
         socket.on('chat-message', (message) => {
@@ -286,6 +320,9 @@ export default function PokerRoom() {
         })
 
         socket.on('item-thrown', ({ fromPlayerId, targetPlayerId, fromSocketId, targetSocketId, itemId }) => {
+            // Play sound when item is thrown
+            soundManager.playThrowItem()
+            
             // Snapshot positions at emit-time to avoid later recalcs moving earlier throws
             const getSeatCenter = (pid, sid) => {
                 const el = document.querySelector(`[data-player-id="${pid}"], [data-socket-id="${sid}"]`)
@@ -311,7 +348,6 @@ export default function PokerRoom() {
         })
 
         socket.on('rabbit-hunt-revealed', ({ cards, communityCardsIfDealt, gameState }) => {
-            console.log('[RABBIT-HUNT] Cards revealed:', cards)
             setRoomState(prev => ({
                 ...prev,
                 gameState: gameState
@@ -476,6 +512,14 @@ export default function PokerRoom() {
 
     const handlePlayerAction = (action, amount = 0) => {
         if (socket) {
+            // Play sound immediately for local feedback
+            if (action === 'check') {
+                soundManager.playCheck()
+            } else if (action === 'fold') {
+                soundManager.playFoldTimeout()
+            } else if (action === 'call' || action === 'bet' || action === 'raise' || action === 'all-in') {
+                soundManager.playCallRaise()
+            }
             socket.emit('player-action', { action, amount })
         }
     }
@@ -494,15 +538,8 @@ export default function PokerRoom() {
     }
 
     const handleTriggerRabbitHunt = () => {
-        console.log('[RABBIT-HUNT] handleTriggerRabbitHunt called')
-        console.log('[RABBIT-HUNT] Socket exists:', !!socket)
-        console.log('[RABBIT-HUNT] Socket connected:', socket?.connected)
-
         if (socket) {
-            console.log('[RABBIT-HUNT] Emitting rabbit-hunt event')
             socket.emit('rabbit-hunt')
-        } else {
-            console.error('[RABBIT-HUNT] No socket connection!')
         }
     }
 
@@ -703,7 +740,10 @@ export default function PokerRoom() {
                 </div>
 
                 <div className="action-sidebar desktop-action-sidebar">
-                    {myPlayer && myPlayer.seatNumber !== null && roomState.gameState && (
+                    {myPlayer && myPlayer.seatNumber !== null && roomState.gameState && 
+                     roomState.gameState.bettingRound && // Only show if betting round is active
+                     myPlayer.status !== 'all-in' && // Don't show if player is all-in
+                     roomState.gameState.currentPlayer && ( // Only show if there's a current player (someone can act)
                         <ActionPanel
                             isMyTurn={roomState.gameState.currentPlayer === myPlayer.socketId}
                             currentBet={roomState.gameState.currentBet}
@@ -718,7 +758,10 @@ export default function PokerRoom() {
                 </div>
 
                 {/* Mobile Action Panel - Fixed at bottom */}
-                {myPlayer && myPlayer.seatNumber !== null && roomState.gameState && myPlayer.status !== 'all-in' && (
+                {myPlayer && myPlayer.seatNumber !== null && roomState.gameState && 
+                 roomState.gameState.bettingRound && // Only show if betting round is active
+                 myPlayer.status !== 'all-in' && // Don't show if player is all-in
+                 roomState.gameState.currentPlayer && ( // Only show if there's a current player (someone can act)
                     <div className="mobile-action-panel">
                         <ActionPanel
                             isMyTurn={roomState.gameState.currentPlayer === myPlayer.socketId}
@@ -744,11 +787,13 @@ export default function PokerRoom() {
                 </button>
             </div>
 
-            {/* Coin Animation for Pot Collection */}
-            <CoinAnimation 
-                winners={handWinners} 
-                isActive={handWinners && handWinners.length > 0} 
-            />
+            {/* Coin Animation for Pot Collection - only when hand is complete */}
+            {!roomState?.gameState?.bettingRound && handWinners && handWinners.length > 0 && (
+                <CoinAnimation 
+                    winners={handWinners} 
+                    isActive={true} 
+                />
+            )}
 
             {/* Item Animations */}
             {activeAnimations.map(animation => {

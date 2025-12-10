@@ -2,11 +2,7 @@ import PlayingCard from './PlayingCard'
 import './RabbitHuntCards.css'
 
 export default function RabbitHuntCards({ rabbitHunt, onTriggerRabbitHunt }) {
-    console.log('[RABBIT-HUNT] Component render - rabbitHunt:', rabbitHunt)
-    console.log('[RABBIT-HUNT] Component render - onTriggerRabbitHunt:', typeof onTriggerRabbitHunt)
-
     if (!rabbitHunt || rabbitHunt.cardCount === 0) {
-        console.log('[RABBIT-HUNT] Not rendering - no cards or cardCount is 0')
         return null
     }
 
@@ -25,11 +21,8 @@ export default function RabbitHuntCards({ rabbitHunt, onTriggerRabbitHunt }) {
     if (rabbitHunt.available) {
         const handleClick = (e) => {
             e.stopPropagation()
-            console.log('[RABBIT-HUNT] Card clicked, triggering rabbit hunt')
             if (onTriggerRabbitHunt) {
                 onTriggerRabbitHunt()
-            } else {
-                console.error('[RABBIT-HUNT] onTriggerRabbitHunt handler is not defined!')
             }
         }
 

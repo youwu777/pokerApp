@@ -50,8 +50,8 @@ export default function PokerTable({
                                 {communityCards.map((card, i) => (
                                     <PlayingCard key={i} card={card} />
                                 ))}
-                                {/* Rabbit Hunt Cards - show face-down cards with rabbit emoji */}
-                                {gameState.rabbitHunt && (
+                                {/* Rabbit Hunt Cards - only show when hand is complete (bettingRound is null) */}
+                                {!gameState.bettingRound && gameState.rabbitHunt && (
                                     <RabbitHuntCards
                                         rabbitHunt={gameState.rabbitHunt}
                                         onTriggerRabbitHunt={onTriggerRabbitHunt}

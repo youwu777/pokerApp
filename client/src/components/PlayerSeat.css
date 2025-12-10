@@ -415,6 +415,16 @@
     color: #9ca3af;
 }
 
+/* Mucked cards - still visible but with reduced opacity */
+.hole-cards.mucked {
+    opacity: 0.7;
+    filter: grayscale(30%);
+}
+
+.hole-cards.mucked .playing-card {
+    opacity: 0.7;
+}
+
 .hand-rank-label {
     position: absolute;
     bottom: -12px;

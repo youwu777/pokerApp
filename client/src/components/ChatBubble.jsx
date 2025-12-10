@@ -1,10 +1,26 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import './ChatBubble.css'
 
 export default function ChatBubble({ message, playerId, seatNumber, onRemove, updatedAt }) {
     const [isVisible, setIsVisible] = useState(false)
+    const onRemoveRef = useRef(onRemove)
+    const timeoutRef = useRef(null)
+    const removeTimeoutRef = useRef(null)
+
+    // Keep onRemove ref updated
+    useEffect(() => {
+        onRemoveRef.current = onRemove
+    }, [onRemove])
 
     useEffect(() => {
+        // Clear any existing timeouts
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current)
+        }
+        if (removeTimeoutRef.current) {
+            clearTimeout(removeTimeoutRef.current)
+        }
+
         // Trigger fade-in animation
         requestAnimationFrame(() => {
             setIsVisible(true)
@@ -12,16 +28,25 @@ export default function ChatBubble({ message, playerId, seatNumber, onRemove, up
 
         // Auto-remove after 5 seconds
         // Use updatedAt as dependency to reset timer when message updates
-        const timeout = setTimeout(() => {
+        timeoutRef.current = setTimeout(() => {
             setIsVisible(false)
             // Wait for fade-out animation to complete before removing
-            setTimeout(() => {
-                if (onRemove) onRemove()
+            removeTimeoutRef.current = setTimeout(() => {
+                if (onRemoveRef.current) {
+                    onRemoveRef.current()
+                }
             }, 300)
         }, 5000)
 
-        return () => clearTimeout(timeout)
-    }, [onRemove, updatedAt]) // Reset timer when updatedAt changes
+        return () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current)
+            }
+            if (removeTimeoutRef.current) {
+                clearTimeout(removeTimeoutRef.current)
+            }
+        }
+    }, [updatedAt]) // Only reset timer when updatedAt changes
 
     if (!message || !seatNumber) return null
 
@@ -38,4 +63,3 @@ export default function ChatBubble({ message, playerId, seatNumber, onRemove, up
         </div>
     )
 }
-
