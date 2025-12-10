@@ -1,0 +1,268 @@
+/* Position bubbles relative to seat content wrapper */
+.seat-content-wrapper {
+    position: relative;
+}
+
+.chat-bubble {
+    position: absolute;
+    pointer-events: none;
+    z-index: 1000; /* High z-index to appear above betting line and all table elements */
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    max-width: 200px;
+    min-width: 120px;
+}
+
+.chat-bubble.visible {
+    opacity: 1;
+}
+
+.chat-bubble-content {
+    background: rgba(0, 0, 0, 0.9);
+    border: 1px solid rgba(255, 215, 0, 0.4);
+    border-radius: 12px;
+    padding: 8px 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    position: relative;
+}
+
+.chat-bubble-author {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #fbbf24;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.chat-bubble-text {
+    font-size: 0.85rem;
+    color: white;
+    word-wrap: break-word;
+    line-height: 1.3;
+}
+
+.chat-bubble-tail {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-color: rgba(255, 215, 0, 0.4);
+}
+
+/* Position bubbles based on seat number - pointing towards table center */
+/* Bottom seats (0-3) - bubbles above, pointing up towards center */
+.chat-bubble[data-seat="0"] {
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateX(10px); /* Slight right offset for bottom-right seat */
+    margin-bottom: 8px;
+}
+
+.chat-bubble[data-seat="0"].visible {
+    transform: translateX(-50%) translateX(10px) translateY(-4px);
+}
+
+.chat-bubble[data-seat="0"] .chat-bubble-tail {
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 8px 6px 0 6px;
+    border-color: rgba(0, 0, 0, 0.9) transparent transparent transparent;
+}
+
+.chat-bubble[data-seat="1"] {
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateX(5px); /* Slight right offset */
+    margin-bottom: 8px;
+}
+
+.chat-bubble[data-seat="1"].visible {
+    transform: translateX(-50%) translateX(5px) translateY(-4px);
+}
+
+.chat-bubble[data-seat="1"] .chat-bubble-tail {
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 8px 6px 0 6px;
+    border-color: rgba(0, 0, 0, 0.9) transparent transparent transparent;
+}
+
+.chat-bubble[data-seat="2"] {
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateX(-5px); /* Slight left offset */
+    margin-bottom: 8px;
+}
+
+.chat-bubble[data-seat="2"].visible {
+    transform: translateX(-50%) translateX(-5px) translateY(-4px);
+}
+
+.chat-bubble[data-seat="2"] .chat-bubble-tail {
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 8px 6px 0 6px;
+    border-color: rgba(0, 0, 0, 0.9) transparent transparent transparent;
+}
+
+.chat-bubble[data-seat="3"] {
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateX(-10px); /* Slight left offset for bottom-left seat */
+    margin-bottom: 8px;
+}
+
+.chat-bubble[data-seat="3"].visible {
+    transform: translateX(-50%) translateX(-10px) translateY(-4px);
+}
+
+.chat-bubble[data-seat="3"] .chat-bubble-tail {
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 8px 6px 0 6px;
+    border-color: rgba(0, 0, 0, 0.9) transparent transparent transparent;
+}
+
+/* Left seat (4) - bubble to right of seat, pointing right towards center */
+.chat-bubble[data-seat="4"] {
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%) translateY(-5px); /* Slight up offset to angle towards center */
+    margin-left: 8px;
+}
+
+.chat-bubble[data-seat="4"].visible {
+    transform: translateY(-50%) translateY(-5px) translateX(4px);
+}
+
+.chat-bubble[data-seat="4"] .chat-bubble-tail {
+    left: -8px;
+    top: 50%;
+    transform: translateY(-50%);
+    border-width: 6px 8px 6px 0;
+    border-color: transparent rgba(0, 0, 0, 0.9) transparent transparent;
+}
+
+/* Top seats (5-8) - bubbles below, pointing down towards center */
+.chat-bubble[data-seat="5"] {
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateX(-10px); /* Slight left offset for top-left seat */
+    margin-top: 8px;
+}
+
+.chat-bubble[data-seat="5"].visible {
+    transform: translateX(-50%) translateX(-10px) translateY(4px);
+}
+
+.chat-bubble[data-seat="5"] .chat-bubble-tail {
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 0 6px 8px 6px;
+    border-color: transparent transparent rgba(0, 0, 0, 0.9) transparent;
+}
+
+.chat-bubble[data-seat="6"] {
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateX(-5px); /* Slight left offset */
+    margin-top: 8px;
+}
+
+.chat-bubble[data-seat="6"].visible {
+    transform: translateX(-50%) translateX(-5px) translateY(4px);
+}
+
+.chat-bubble[data-seat="6"] .chat-bubble-tail {
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 0 6px 8px 6px;
+    border-color: transparent transparent rgba(0, 0, 0, 0.9) transparent;
+}
+
+.chat-bubble[data-seat="7"] {
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateX(5px); /* Slight right offset */
+    margin-top: 8px;
+}
+
+.chat-bubble[data-seat="7"].visible {
+    transform: translateX(-50%) translateX(5px) translateY(4px);
+}
+
+.chat-bubble[data-seat="7"] .chat-bubble-tail {
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 0 6px 8px 6px;
+    border-color: transparent transparent rgba(0, 0, 0, 0.9) transparent;
+}
+
+.chat-bubble[data-seat="8"] {
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateX(10px); /* Slight right offset for top-right seat */
+    margin-top: 8px;
+}
+
+.chat-bubble[data-seat="8"].visible {
+    transform: translateX(-50%) translateX(10px) translateY(4px);
+}
+
+.chat-bubble[data-seat="8"] .chat-bubble-tail {
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 0 6px 8px 6px;
+    border-color: transparent transparent rgba(0, 0, 0, 0.9) transparent;
+}
+
+/* Right seat (9) - bubble to left of seat, pointing left towards center */
+.chat-bubble[data-seat="9"] {
+    right: 100%;
+    top: 50%;
+    transform: translateY(-50%) translateY(-5px); /* Slight up offset to angle towards center */
+    margin-right: 8px;
+}
+
+.chat-bubble[data-seat="9"].visible {
+    transform: translateY(-50%) translateY(-5px) translateX(-4px);
+}
+
+.chat-bubble[data-seat="9"] .chat-bubble-tail {
+    right: -8px;
+    top: 50%;
+    transform: translateY(-50%);
+    border-width: 6px 0 6px 8px;
+    border-color: transparent transparent transparent rgba(0, 0, 0, 0.9);
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    .chat-bubble {
+        max-width: 150px;
+        min-width: 100px;
+    }
+
+    .chat-bubble-content {
+        padding: 6px 10px;
+    }
+
+    .chat-bubble-author {
+        font-size: 0.65rem;
+    }
+
+    .chat-bubble-text {
+        font-size: 0.75rem;
+    }
+}
+

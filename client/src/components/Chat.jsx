@@ -10,19 +10,30 @@ export default function Chat({ socket, roomId, onClose, initialMessages = [], on
     const emotes = ['GG', 'NH', 'WP', 'TY', '😂', '😎', '🔥', '💪']
 
     // Update messages when initialMessages prop changes (from parent)
+    // Use a ref to track if we should sync from parent
+    const isInternalUpdate = useRef(false)
+    
     useEffect(() => {
-        setMessages(initialMessages)
+        // Only update if the change came from parent, not from our own updates
+        if (!isInternalUpdate.current) {
+            setMessages(initialMessages)
+        }
+        isInternalUpdate.current = false
     }, [initialMessages])
 
     useEffect(() => {
         if (!socket) return
 
         const handleChatMessage = (message) => {
+            isInternalUpdate.current = true
             setMessages(prev => {
                 const newMessages = [...prev, message]
-                // Notify parent component of message changes
+                // Notify parent component of message changes (defer to avoid render warning)
                 if (onMessagesChange) {
-                    onMessagesChange(newMessages)
+                    // Use setTimeout to defer the state update to avoid render warning
+                    setTimeout(() => {
+                        onMessagesChange(newMessages)
+                    }, 0)
                 }
                 return newMessages
             })

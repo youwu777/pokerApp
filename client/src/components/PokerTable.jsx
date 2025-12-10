@@ -1,6 +1,7 @@
 import PlayerSeat from './PlayerSeat'
 import PlayingCard from './PlayingCard'
 import RabbitHuntCards from './RabbitHuntCards'
+import ChatBubble from './ChatBubble'
 import './PokerTable.css'
 
 export default function PokerTable({
@@ -15,7 +16,9 @@ export default function PokerTable({
     visibleCommunityCards,
     onThrowItem,
     impactMarks,
-    onTriggerRabbitHunt
+    onTriggerRabbitHunt,
+    activeChatBubbles = [],
+    onRemoveChatBubble
 }) {
     const gameState = roomState?.gameState
     const players = roomState?.players || []
@@ -86,26 +89,47 @@ export default function PokerTable({
                     // Find showdown hand for this player
                     const showdownHand = player && showdownHands ? showdownHands.find(h => h.socketId === player.socketId) : null;
 
+                    // Find chat bubble for this seat
+                    const seatChatBubble = activeChatBubbles.find(bubble => 
+                        bubble.seatNumber === seatNumber
+                    )
+
                     return (
                         <div key={seatNumber} className={`seat seat-${seatNumber}`}>
-                            <PlayerSeat
-                                player={player}
-                                seatNumber={seatNumber}
-                                playerIndex={playerIndex}
-                                isMe={player?.socketId === myPlayer?.socketId}
-                                holeCards={player?.socketId === myPlayer?.socketId ? holeCards : []}
-                                showdownHand={showdownHand}
-                                timerState={timerState}
-                                dealerPosition={gameState?.dealerPosition}
-                                totalPlayers={seatedPlayers}
-                                onSitDown={() => onSitDown(seatNumber)}
-                                onStandUp={onStandUp}
-                                isCurrentPlayer={gameState?.currentPlayer === player?.socketId}
-                                isViewerSeated={isViewerSeated}
-                                myPlayer={myPlayer}
-                                onThrowItem={onThrowItem}
-                                impactMarks={impactMarks?.[player?.playerId] || impactMarks?.[player?.socketId] || []}
-                            />
+                            <div className="seat-content-wrapper">
+                                <PlayerSeat
+                                    player={player}
+                                    seatNumber={seatNumber}
+                                    playerIndex={playerIndex}
+                                    isMe={player?.socketId === myPlayer?.socketId}
+                                    holeCards={player?.socketId === myPlayer?.socketId ? holeCards : []}
+                                    showdownHand={showdownHand}
+                                    timerState={timerState}
+                                    dealerPosition={gameState?.dealerPosition}
+                                    totalPlayers={seatedPlayers}
+                                    onSitDown={() => onSitDown(seatNumber)}
+                                    onStandUp={onStandUp}
+                                    isCurrentPlayer={gameState?.currentPlayer === player?.socketId}
+                                    isViewerSeated={isViewerSeated}
+                                    myPlayer={myPlayer}
+                                    onThrowItem={onThrowItem}
+                                    impactMarks={impactMarks?.[player?.playerId] || impactMarks?.[player?.socketId] || []}
+                                />
+                                {seatChatBubble && (
+                                    <ChatBubble
+                                        key={seatChatBubble.id}
+                                        message={seatChatBubble.message}
+                                        playerId={seatChatBubble.playerId}
+                                        seatNumber={seatNumber}
+                                        updatedAt={seatChatBubble.updatedAt}
+                                        onRemove={() => {
+                                            if (onRemoveChatBubble) {
+                                                onRemoveChatBubble(seatChatBubble.id)
+                                            }
+                                        }}
+                                    />
+                                )}
+                            </div>
                         </div>
                     );
                 })}

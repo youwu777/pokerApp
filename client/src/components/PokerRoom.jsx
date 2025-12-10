@@ -10,6 +10,7 @@ import BuyInNotification from './BuyInNotification'
 import ScoreBoard from './ScoreBoard'
 import ItemAnimation from './ItemAnimation'
 import CoinAnimation from './CoinAnimation'
+import ChatBubble from './ChatBubble'
 import './PokerRoom.css'
 
 export default function PokerRoom() {
@@ -35,6 +36,7 @@ export default function PokerRoom() {
     const [chatMessages, setChatMessages] = useState([])
     const [activeAnimations, setActiveAnimations] = useState([])
     const [impactMarks, setImpactMarks] = useState({})
+    const [activeChatBubbles, setActiveChatBubbles] = useState([])
 
     // Get session token from localStorage
     const getSessionToken = () => {
@@ -148,6 +150,17 @@ export default function PokerRoom() {
             if (state?.chatHistory) {
                 setChatMessages(state.chatHistory)
             }
+            // Update chat bubbles when room state changes (to get updated player info)
+            setActiveChatBubbles(prev => prev.map(bubble => {
+                const sender = state?.players?.find(p => 
+                    p.socketId === bubble.playerId || 
+                    p.playerId === bubble.playerId
+                )
+                if (sender && sender.seatNumber !== null) {
+                    return { ...bubble, seatNumber: sender.seatNumber }
+                }
+                return bubble
+            }))
         })
 
         socket.on('player-joined', ({ player }) => {
@@ -228,6 +241,48 @@ export default function PokerRoom() {
         socket.on('chat-message', (message) => {
             // Store chat messages in parent component to persist across modal open/close
             setChatMessages(prev => [...prev, message])
+            
+            // Find the player who sent the message and show/update chat bubble
+            setRoomState(currentState => {
+                if (currentState?.players) {
+                    const sender = currentState.players.find(p => 
+                        p.socketId === message.playerId || 
+                        p.playerId === message.playerId
+                    )
+                    
+                    if (sender && sender.seatNumber !== null) {
+                        setActiveChatBubbles(prev => {
+                            // Check if there's already a bubble for this seat
+                            const existingBubbleIndex = prev.findIndex(bubble => 
+                                bubble.seatNumber === sender.seatNumber &&
+                                (bubble.playerId === message.playerId || bubble.playerId === sender.socketId || bubble.playerId === sender.playerId)
+                            )
+                            
+                            if (existingBubbleIndex >= 0) {
+                                // Update existing bubble with new message and reset timer
+                                const updatedBubbles = [...prev]
+                                updatedBubbles[existingBubbleIndex] = {
+                                    ...updatedBubbles[existingBubbleIndex],
+                                    message,
+                                    updatedAt: Date.now() // Signal to reset timer
+                                }
+                                return updatedBubbles
+                            } else {
+                                // Create new bubble
+                                const bubbleId = `chat-${Date.now()}-${Math.random().toString(36).slice(2)}`
+                                return [...prev, {
+                                    id: bubbleId,
+                                    message,
+                                    playerId: message.playerId,
+                                    seatNumber: sender.seatNumber,
+                                    updatedAt: Date.now()
+                                }]
+                            }
+                        })
+                    }
+                }
+                return currentState
+            })
         })
 
         socket.on('item-thrown', ({ fromPlayerId, targetPlayerId, fromSocketId, targetSocketId, itemId }) => {
@@ -640,6 +695,10 @@ export default function PokerRoom() {
                         onThrowItem={handleThrowItem}
                         impactMarks={impactMarks}
                         onTriggerRabbitHunt={handleTriggerRabbitHunt}
+                        activeChatBubbles={activeChatBubbles}
+                        onRemoveChatBubble={(bubbleId) => {
+                            setActiveChatBubbles(prev => prev.filter(b => b.id !== bubbleId))
+                        }}
                     />
                 </div>
 

@@ -22,6 +22,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    z-index: 0; /* Create stacking context */
 }
 
 /* Inner white oval betting line */
@@ -35,6 +36,7 @@
     border: 4px solid rgba(255, 255, 255, 0.616);
     border-radius: 170px;
     pointer-events: none;
+    z-index: 1; /* Above table background but below chat bubbles */
 }
 
 .table-center {
@@ -42,7 +44,7 @@
     flex-direction: column;
     align-items: center;
     gap: var(--space-xl);
-    z-index: 1;
+    z-index: 2; /* Above betting line */
 }
 
 .community-cards {
@@ -123,6 +125,15 @@
 
 .seat {
     position: absolute;
+    z-index: 100; /* Seats above betting line */
+}
+
+/* Wrapper for seat content to enable relative positioning of chat bubbles */
+.seat-content-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    z-index: 100; /* Ensure wrapper is above betting line */
 }
 
 /* Bottom Row (4 players) - Right to Left */
