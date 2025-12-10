@@ -1,5 +1,6 @@
 import PlayerSeat from './PlayerSeat'
 import PlayingCard from './PlayingCard'
+import RabbitHuntCards from './RabbitHuntCards'
 import './PokerTable.css'
 
 export default function PokerTable({
@@ -13,7 +14,8 @@ export default function PokerTable({
     onPlayerAction,
     visibleCommunityCards,
     onThrowItem,
-    impactMarks
+    impactMarks,
+    onTriggerRabbitHunt
 }) {
     const gameState = roomState?.gameState
     const players = roomState?.players || []
@@ -45,6 +47,13 @@ export default function PokerTable({
                                 {communityCards.map((card, i) => (
                                     <PlayingCard key={i} card={card} />
                                 ))}
+                                {/* Rabbit Hunt Cards - show face-down cards with rabbit emoji */}
+                                {gameState.rabbitHunt && (
+                                    <RabbitHuntCards
+                                        rabbitHunt={gameState.rabbitHunt}
+                                        onTriggerRabbitHunt={onTriggerRabbitHunt}
+                                    />
+                                )}
                             </div>
                             <div className="pot-display">
                                 <div className="pot-amount mono">${gameState.pot}</div>

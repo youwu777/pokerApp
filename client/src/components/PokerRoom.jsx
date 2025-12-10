@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useSocket } from '../context/SocketContext'
 import PokerTable from './PokerTable'
@@ -9,6 +9,7 @@ import BuyInRequest from './BuyInRequest'
 import BuyInNotification from './BuyInNotification'
 import ScoreBoard from './ScoreBoard'
 import ItemAnimation from './ItemAnimation'
+import CoinAnimation from './CoinAnimation'
 import './PokerRoom.css'
 
 export default function PokerRoom() {
@@ -681,6 +682,12 @@ export default function PokerRoom() {
                     {showChat && <span className="chat-badge">●</span>}
                 </button>
             </div>
+
+            {/* Coin Animation for Pot Collection */}
+            <CoinAnimation 
+                winners={handWinners} 
+                isActive={handWinners && handWinners.length > 0} 
+            />
 
             {/* Item Animations */}
             {activeAnimations.map(animation => {
