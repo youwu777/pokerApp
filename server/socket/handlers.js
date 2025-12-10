@@ -40,6 +40,26 @@ export function setupSocketHandlers(io, socket) {
 
     // Join room
     socket.on('join-room', ({ roomId, nickname, buyinAmount, sessionToken }) => {
+        // First, check if socket is already in a different room and leave it
+        // This prevents sockets from being in multiple Socket.IO rooms simultaneously
+        const previousRoom = roomManager.getRoomBySocketId(socket.id);
+        if (previousRoom && previousRoom.id !== roomId) {
+            console.log(`[JOIN] Socket ${socket.id} leaving previous room ${previousRoom.id} before joining ${roomId}`);
+            // Leave the Socket.IO room to prevent receiving events from both rooms
+            socket.leave(previousRoom.id);
+            
+            // Remove player from previous room when switching to a different room
+            const previousPlayer = previousRoom.getPlayer(socket.id);
+            if (previousPlayer) {
+                previousRoom.removePlayer(socket.id);
+                io.to(previousRoom.id).emit('player-left', {
+                    playerId: previousPlayer.sessionToken || previousPlayer.socketId,
+                    nickname: previousPlayer.nickname
+                });
+                io.to(previousRoom.id).emit('room-state', previousRoom.toJSON());
+            }
+        }
+
         const room = roomManager.getRoom(roomId);
 
         if (!room) {
@@ -781,6 +801,9 @@ export function setupSocketHandlers(io, socket) {
 
         const player = room.getPlayer(socket.id);
         if (player) {
+            // Leave the Socket.IO room
+            socket.leave(room.id);
+            
             // Mark as disconnected but keep state for retention window
             player.isConnected = false;
             player.disconnectedAt = Date.now();
