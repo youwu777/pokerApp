@@ -90,9 +90,19 @@ class SoundManager {
         })
     }
 
-    // Your turn sound - pleasant notification
+    // Your turn sound - double beep (beep-beep)
     playYourTurn() {
-        this.playChord([523.25, 659.25, 783.99], 0.3, 'sine', 0.25) // C-E-G chord
+        if (!this.enabled || !this.audioContext) return
+
+        this.ensureContext().then(() => {
+            // First beep
+            this.playTone(800, 0.15, 'sine', 0.3)
+
+            // Second beep after 0.25s delay (total 0.5s)
+            setTimeout(() => {
+                this.playTone(800, 0.15, 'sine', 0.3)
+            }, 250)
+        })
     }
 
     // Ticking sound - clock tick for countdown

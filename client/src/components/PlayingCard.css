@@ -64,6 +64,26 @@
     opacity: 0.3;
 }
 
+/* Larger community cards on desktop */
+@media (min-width: 769px) {
+    .community-cards .playing-card {
+        width: 75px;
+        height: 105px;
+    }
+
+    .community-cards .card-rank {
+        font-size: 1.5rem;
+    }
+
+    .community-cards .card-suit {
+        font-size: 1.5rem;
+    }
+
+    .community-cards .card-suit-large {
+        font-size: 4rem;
+    }
+}
+
 /* Card Back */
 .card-back {
     background: linear-gradient(135deg, #1a1a2e, #16213e);

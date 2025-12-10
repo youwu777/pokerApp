@@ -8,14 +8,17 @@ export default function ActionPanel({
     myChips,
     minRaise,
     pot,
+    currentStreet,
     onAction,
     timerState
 }) {
     const [raiseAmount, setRaiseAmount] = useState(minRaise)
+    const [inputValue, setInputValue] = useState(minRaise.toString())
 
-    // Update raiseAmount when minRaise changes
+    // Update raiseAmount and inputValue when minRaise changes
     useEffect(() => {
         setRaiseAmount(minRaise)
+        setInputValue(minRaise.toString())
     }, [minRaise])
 
     // Calculate amount to call, but cap it at available chips
@@ -28,7 +31,11 @@ export default function ActionPanel({
 
     // Calculate total raise amount for display (myBet + amountToCall + raiseAmount)
     // This represents the player's total bet after raising
-    const totalRaiseAmount = amountToCall + raiseAmount + myBet
+    // Cap at available chips - player can't bet more than they have
+    const totalRaiseAmount = Math.min(amountToCall + raiseAmount + myBet, myBet + myChips)
+
+    // Cap bet amount at available chips
+    const displayBetAmount = Math.min(raiseAmount, myChips)
 
     const setRaiseFromTotal = (total) => {
         const desired = Number(total) - amountToCall - myBet
@@ -52,6 +59,18 @@ export default function ActionPanel({
         // Ensure the amount is at least minRaise and not more than myChips
         const validAmount = Math.max(minRaise, Math.min(calculatedAmount, myChips))
         setRaiseAmount(validAmount)
+        setInputValue(validAmount.toString())
+    }
+
+    const validateAndSetInput = (value) => {
+        const val = Number(value)
+        if (!Number.isNaN(val) && val > 0) {
+            setRaiseFromTotal(val)
+            setInputValue(val.toString())
+        } else {
+            // Reset to current raiseAmount if invalid
+            setInputValue(totalRaiseAmount.toString())
+        }
     }
 
     // Timer logic - Combined action timer + timebank into one continuous bar
@@ -139,7 +158,7 @@ export default function ActionPanel({
 
                 {canCheck ? (
                     <button
-                        className="btn btn-success"
+                        className={`btn btn-success ${raiseAmount !== minRaise ? 'btn-dimmed' : ''}`}
                         onClick={handleCheck}
                     >
                         Check
@@ -158,7 +177,7 @@ export default function ActionPanel({
                         className="btn btn-primary"
                         onClick={handleBet}
                     >
-                        Bet ${raiseAmount}
+                        Bet ${displayBetAmount}
                     </button>
                 )}
 
@@ -187,20 +206,25 @@ export default function ActionPanel({
                             min={minRaise}
                             max={myChips}
                             value={totalRaiseAmount}
-                            onChange={(e) => setRaiseFromTotal(Number(e.target.value))}
+                            onChange={(e) => {
+                                const val = Number(e.target.value)
+                                setRaiseFromTotal(val)
+                                setInputValue(val.toString())
+                            }}
                             className="range range-primary range-sm"
                         />
                         <div className="raise-amount-input">
                             <span className="currency-symbol">$</span>
                             <input
                                 type="number"
-                                min={minRaise}
-                                max={myChips}
-                                value={totalRaiseAmount}
-                                onChange={(e) => {
-                                    const val = Number(e.target.value);
-                                    if (!Number.isNaN(val)) {
-                                        setRaiseFromTotal(val);
+                                value={inputValue}
+                                onChange={(e) => setInputValue(e.target.value)}
+                                onBlur={(e) => validateAndSetInput(e.target.value)}
+                                onFocus={(e) => e.target.select()}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        validateAndSetInput(e.target.value)
+                                        e.target.blur()
                                     }
                                 }}
                                 className="input input-bordered input-sm w-24 text-center"
@@ -209,36 +233,67 @@ export default function ActionPanel({
                     </div>
 
                     <div className="preset-buttons">
-                        <button
-                            className="btn btn-ghost btn-sm"
-                            onClick={() => setPresetAmount(0.25)}
-                        >
-                            1/4 Pot
-                        </button>
-                        <button
-                            className="btn btn-ghost btn-sm"
-                            onClick={() => setPresetAmount(0.5)}
-                        >
-                            1/2 Pot
-                        </button>
-                        <button
-                            className="btn btn-ghost btn-sm"
-                            onClick={() => setPresetAmount(0.75)}
-                        >
-                            3/4 Pot
-                        </button>
-                        <button
-                            className="btn btn-ghost btn-sm"
-                            onClick={() => setPresetAmount(1)}
-                        >
-                            1x Pot
-                        </button>
-                        <button
-                            className="btn btn-ghost btn-sm"
-                            onClick={() => setPresetAmount(2)}
-                        >
-                            2x Pot
-                        </button>
+                        {currentStreet === 'preflop' ? (
+                            <>
+                                <button
+                                    className="btn btn-ghost btn-sm"
+                                    onClick={() => setPresetAmount(2)}
+                                >
+                                    2x Pot
+                                </button>
+                                <button
+                                    className="btn btn-ghost btn-sm"
+                                    onClick={() => setPresetAmount(3)}
+                                >
+                                    3x Pot
+                                </button>
+                                <button
+                                    className="btn btn-ghost btn-sm"
+                                    onClick={() => setPresetAmount(4)}
+                                >
+                                    4x Pot
+                                </button>
+                                <button
+                                    className="btn btn-ghost btn-sm"
+                                    onClick={() => setPresetAmount(5)}
+                                >
+                                    5x Pot
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <button
+                                    className="btn btn-ghost btn-sm"
+                                    onClick={() => setPresetAmount(0.25)}
+                                >
+                                    1/4 Pot
+                                </button>
+                                <button
+                                    className="btn btn-ghost btn-sm"
+                                    onClick={() => setPresetAmount(0.5)}
+                                >
+                                    1/2 Pot
+                                </button>
+                                <button
+                                    className="btn btn-ghost btn-sm"
+                                    onClick={() => setPresetAmount(0.75)}
+                                >
+                                    3/4 Pot
+                                </button>
+                                <button
+                                    className="btn btn-ghost btn-sm"
+                                    onClick={() => setPresetAmount(1)}
+                                >
+                                    1x Pot
+                                </button>
+                                <button
+                                    className="btn btn-ghost btn-sm"
+                                    onClick={() => setPresetAmount(2)}
+                                >
+                                    2x Pot
+                                </button>
+                            </>
+                        )}
                     </div>
                 </div>
             )}

@@ -25,6 +25,7 @@ export default function PokerRoom() {
     const [roomState, setRoomState] = useState(null)
     const [myPlayer, setMyPlayer] = useState(null)
     const myPlayerRef = useRef(null) // Ref to track myPlayer for sound effects
+    const isMyTurnRef = useRef(false) // Ref to track if it's currently my turn
     const [isHost, setIsHost] = useState(false)
     const [holeCards, setHoleCards] = useState([])
     const [showdownHands, setShowdownHands] = useState([])
@@ -194,8 +195,9 @@ export default function PokerRoom() {
             if (gameState && gameState.communityCards) {
                 setVisibleCommunityCards(gameState.communityCards)
             }
-            // Clear timer state when player acts (will be updated by next timer-tick or cleared)
+            // Clear timer state and turn tracking when player acts
             setTimerState(null)
+            isMyTurnRef.current = false
             
             // Play sound if it's your action (use ref to avoid stale closure)
             const me = myPlayerRef.current
@@ -226,21 +228,19 @@ export default function PokerRoom() {
         })
 
         socket.on('timer-tick', (data) => {
-            const wasMyTurn = timerState && (timerState.playerId === socket.id || (myPlayerRef.current && (timerState.playerId === myPlayerRef.current.playerId || timerState.playerId === myPlayerRef.current.sessionToken)))
+            const wasMyTurn = isMyTurnRef.current
             setTimerState(data)
-            
-            // Play sound when it's your turn
+
+            // Check if it's my turn
             const me = myPlayerRef.current
             const isMyTurn = data.playerId === socket.id || (me && (data.playerId === me.playerId || data.playerId === me.sessionToken))
-            
-            if (isMyTurn) {
-                // Play "your turn" sound only on first tick (when timer starts)
-                if (!wasMyTurn) {
-                    soundManager.playYourTurn()
-                } else {
-                    // Play ticking sound during countdown
-                    soundManager.playTick()
-                }
+
+            // Update ref
+            isMyTurnRef.current = isMyTurn
+
+            // Play sound only when turn STARTS (wasMyTurn false -> isMyTurn true)
+            if (isMyTurn && !wasMyTurn) {
+                soundManager.playYourTurn()
             }
         })
 
@@ -258,6 +258,7 @@ export default function PokerRoom() {
             setRoomState(roomState)
             // Keep hole cards visible until next hand starts
             setTimerState(null) // Clear timer
+            isMyTurnRef.current = false // Reset turn tracking
             // Update visible community cards to show all cards
             if (roomState?.gameState?.communityCards) {
                 setVisibleCommunityCards(roomState.gameState.communityCards)
@@ -780,6 +781,7 @@ export default function PokerRoom() {
                             myChips={myPlayer.chips}
                             minRaise={roomState.gameState.minRaise}
                             pot={roomState.gameState.pot}
+                            currentStreet={roomState.gameState.currentStreet}
                             onAction={handlePlayerAction}
                             timerState={timerState && timerState.playerId === myPlayer.socketId ? timerState : null}
                         />
@@ -799,6 +801,7 @@ export default function PokerRoom() {
                             myChips={myPlayer.chips}
                             minRaise={roomState.gameState.minRaise}
                             pot={roomState.gameState.pot}
+                            currentStreet={roomState.gameState.currentStreet}
                             onAction={handlePlayerAction}
                             timerState={timerState && timerState.playerId === myPlayer.socketId ? timerState : null}
                         />

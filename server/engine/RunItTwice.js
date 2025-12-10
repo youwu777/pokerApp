@@ -15,8 +15,14 @@ export class RunItTwice {
         const activePlayers = game.players.filter(p => p.status !== 'folded');
         const allInPlayers = activePlayers.filter(p => p.status === 'all-in' || p.chips === 0);
 
-        // At least one all-in and at least one other player
-        return allInPlayers.length > 0 && activePlayers.length > 1;
+        // Check if there are any players who can still act (have active status)
+        const playersCanAct = activePlayers.filter(p => p.status === 'active');
+
+        // Only applicable if:
+        // 1. At least one player is all-in
+        // 2. At least one other player is not folded
+        // 3. NO players can still act (betting is complete)
+        return allInPlayers.length > 0 && activePlayers.length > 1 && playersCanAct.length === 0;
     }
 
     /**

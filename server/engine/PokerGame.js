@@ -408,16 +408,26 @@ export class PokerGame {
         // Check if all remaining players are all-in
         const playersCanAct = activePlayers.filter(p => p.status === 'active');
         if (playersCanAct.length === 0) {
+            // If already on river, no cards to reveal - just end hand
+            if (this.currentStreet === 'river') {
+                console.log('[DEBUG] All players all-in on river, ending hand immediately');
+                return this.endHand();
+            }
             // Run out remaining streets - cards will be revealed progressively
             const cardsToReveal = this.runOutBoard();
             // Add all cards immediately for endHand calculation, but return special flag
             // The actual reveal will be handled by the socket handler
             return { cardsToReveal, allInShowdown: true };
         }
-        
+
         // If only one player can act, skip to showdown (no point in betting with no one to bet against)
         if (playersCanAct.length === 1) {
             console.log(`[DEBUG] Only one player can act (${playersCanAct[0].nickname}), skipping to showdown`);
+            // If already on river, no cards to reveal - just end hand
+            if (this.currentStreet === 'river') {
+                console.log('[DEBUG] One player can act on river, ending hand immediately');
+                return this.endHand();
+            }
             // Run out remaining streets - cards will be revealed progressively
             const cardsToReveal = this.runOutBoard();
             // Add all cards immediately for endHand calculation, but return special flag
