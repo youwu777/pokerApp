@@ -1,6 +1,16 @@
 .poker-room {
-    min-height: 100vh;
-    background: var(--color-bg-darker);
+    height: 100vh;
+    max-height: 100vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background-image: 
+        linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)),
+        url('https://scx2.b-cdn.net/gfx/news/hires/2013/studyshowsmo.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-color: var(--color-bg-darker);
     display: flex;
     flex-direction: column;
 }
@@ -145,11 +155,12 @@
     .room-controls .btn,
     .room-controls .buyin-request-btn,
     .room-controls .btn-sm {
-        min-width: 96px;
-        height: 32px;
-        padding: 0 10px;
-        font-size: 0.85rem;
-        border-radius: 8px;
+        min-width: 80px;
+        height: 28px;
+        padding: 0 8px;
+        font-size: 0.75rem;
+        border-radius: 6px;
+        line-height: 1.2;
     }
 }
 .room-stats {
@@ -167,6 +178,7 @@
     padding: var(--space-lg);
     padding-top: calc(var(--space-lg) + 100px); /* Add top padding to account for fixed header */
     overflow: hidden;
+    min-height: 0;
 }
 
 .action-sidebar {
@@ -227,19 +239,27 @@
     .room-controls {
         width: 100%;
         flex-wrap: wrap;
-        gap: var(--space-xs);
+        gap: 4px;
+        max-height: 64px;
+        overflow: hidden;
     }
 
     .room-controls .btn {
-        font-size: 0.8rem;
-        padding: var(--space-xs) var(--space-sm);
+        font-size: 0.75rem;
+        padding: 4px 8px;
+        height: 28px;
+        min-width: 80px;
     }
 
     .room-content {
         padding: var(--space-sm);
-        padding-top: calc(var(--space-sm) + 80px); /* Account for fixed header on mobile */
+        padding-top: calc(var(--space-sm) + 100px); /* Account for fixed header on mobile */
+        padding-bottom: var(--space-sm);
         grid-template-columns: 1fr;
         position: relative;
+        min-height: 0;
+        flex: 1;
+        overflow-y: auto;
     }
 
     /* Hide desktop chat sidebar on mobile */
@@ -336,9 +356,9 @@
         border: 2px solid white;
     }
     .table-container {
-        padding: 32px 5px 180px; /* Extra top padding to bring table lower, plus space for mobile action panel */
+        padding: 120px 5px 180px; /* Increased top padding to move table down and provide space for top player seat */
         overflow: visible;
-        min-height: calc(100vh - 150px);
+        min-height: 0;
         display: flex;
         align-items: center;
         justify-content: center;

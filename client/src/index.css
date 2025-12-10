@@ -81,7 +81,14 @@ html, body {
 
 body {
   font-family: var(--font-primary);
-  background: var(--color-bg-dark);
+  background-image: 
+    linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)),
+    url('https://scx2.b-cdn.net/gfx/news/hires/2013/studyshowsmo.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-color: var(--color-bg-dark);
   color: var(--color-text);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
@@ -89,7 +96,11 @@ body {
 }
 
 #root {
-  min-height: 100vh;
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 /* ===== TYPOGRAPHY ===== */

@@ -67,7 +67,7 @@ export default function ActionPanel({
         <div className="action-panel">
             <div className="action-buttons">
                 <button
-                    className="btn btn-danger"
+                    className={`btn btn-danger ${canCheck ? 'btn-dimmed' : ''}`}
                     onClick={handleFold}
                 >
                     Fold

@@ -67,7 +67,7 @@ export default function BuyInRequest({ socket, isHost, myPlayer }) {
                 onClick={() => setShowModal(true)}
                 disabled={pendingRequest !== null}
             >
-                {pendingRequest ? `Buy-in Pending: $${pendingRequest.amount}` : 'Request Buy-In'}
+                {pendingRequest ? `Buy-in Pending: $${pendingRequest.amount}` : 'Buy In'}
             </button>
 
             {showModal && (

@@ -1,9 +1,32 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useMemo } from 'react'
 import PlayingCard from './PlayingCard'
 import ThrowItemMenu from './ThrowItemMenu'
-// Image is in public folder, reference as static asset
-const catImage = '/image.png'
 import './PlayerSeat.css'
+
+// Dynamically import all images from src/image folder using Vite's glob
+// Use relative path pattern that Vite can resolve
+const imageModules = import.meta.glob('../image/*.{png,jpg,jpeg}', { eager: true })
+const availableImages = Object.values(imageModules).map(module => module.default)
+
+// Fallback image (the original cat image from public folder)
+const fallbackImage = '/image.png'
+
+// Function to get a consistent image for a player based on their ID
+function getPlayerImage(playerId) {
+    if (!playerId || availableImages.length === 0) return fallbackImage
+    
+    // Simple hash function to convert playerId to a number
+    let hash = 0
+    for (let i = 0; i < playerId.length; i++) {
+        const char = playerId.charCodeAt(i)
+        hash = ((hash << 5) - hash) + char
+        hash = hash & hash // Convert to 32bit integer
+    }
+    
+    // Use absolute value and modulo to get index
+    const index = Math.abs(hash) % availableImages.length
+    return availableImages[index] || fallbackImage
+}
 
 export default function PlayerSeat({
     player,
@@ -25,6 +48,14 @@ export default function PlayerSeat({
     const [showThrowMenu, setShowThrowMenu] = useState(false)
     const [menuPosition, setMenuPosition] = useState(null)
     const seatRef = useRef(null)
+    
+    // Get player's background image based on their ID (consistent for same player)
+    // Must be called before any early returns (React Hook rules)
+    const playerImage = useMemo(() => {
+        const playerId = player?.playerId || player?.socketId
+        return getPlayerImage(playerId)
+    }, [player?.playerId, player?.socketId])
+    
     if (!player) {
         if (isViewerSeated) {
             return <div className="player-seat empty-seat disabled"></div>;
@@ -55,6 +86,10 @@ export default function PlayerSeat({
     if (showdownHand) {
         if (showdownHand.isMucked) {
             isMucked = true;
+            // Still show own cards even if mucked (visible only to player)
+            if (isMe && holeCards.length > 0) {
+                cardsToShow = holeCards;
+            }
         } else if (showdownHand.holeCards) {
             cardsToShow = showdownHand.holeCards;
             isWinner = showdownHand.isWinner;
@@ -64,11 +99,61 @@ export default function PlayerSeat({
         cardsToShow = holeCards;
     }
 
-    // Timer logic
+    // Timer logic - Combined action timer + timebank into one continuous bar
     const showTimer = isCurrentPlayer && timerState && timerState.playerId === player?.socketId;
-    const timerPercent = showTimer ? (timerState.remaining / 30) * 100 : 0; // Assuming 30s max for now, or pass max time
-    const isLowTime = showTimer && timerState.remaining <= 5;
-    const isTimeBank = showTimer && timerState.usingTimeBank;
+
+    // Calculate total time and percentage for unified timer bar
+    let timerPercent = 0;
+    let isLowTime = false;
+    let isTimeBank = false;
+
+    // Calculate separate percentages for action timer and timebank
+    let actionPercent = 0;
+    let timebankPercent = 0;
+
+    if (showTimer) {
+        const actionTime = 30; // Action timer duration
+
+        // During timebank phase, timebankRemaining might equal remaining
+        // We need to use a fixed total time based on initial values
+        let timebankTotal;
+        let totalTime;
+
+        if (timerState.usingTimeBank) {
+            // In timebank: use remaining as the max timebank (first tick of timebank phase)
+            // But totalTime should include the full action time too
+            // Use ?? instead of || to allow 0 timebank
+            timebankTotal = timerState.timebankRemaining ?? 60;
+            totalTime = actionTime + timebankTotal;
+
+            // Action time is done, show only timebank remaining
+            actionPercent = 0;
+            timebankPercent = (timerState.remaining / totalTime) * 100;
+            isTimeBank = true;
+        } else {
+            // In action phase: timebank hasn't been touched yet
+            // Use ?? instead of || to allow 0 timebank
+            timebankTotal = timerState.timebankRemaining ?? 60;
+            totalTime = actionTime + timebankTotal;
+
+            // Show action time counting down + full timebank
+            actionPercent = (timerState.remaining / totalTime) * 100;
+            timebankPercent = (timebankTotal / totalTime) * 100;
+            isTimeBank = false;
+        }
+
+        console.log('[TIMER-DEBUG]', {
+            remaining: timerState.remaining,
+            usingTimeBank: timerState.usingTimeBank,
+            timebankRemaining: timerState.timebankRemaining,
+            actionPercent: actionPercent.toFixed(1) + '%',
+            timebankPercent: timebankPercent.toFixed(1) + '%',
+            totalPercent: (actionPercent + timebankPercent).toFixed(1) + '%'
+        });
+
+        isLowTime = timerState.remaining <= 5;
+        timerPercent = actionPercent + timebankPercent; // Total for countdown display
+    }
 
     const openThrowMenu = (e) => {
         console.log('Seat clicked:', {
@@ -160,14 +245,26 @@ export default function PlayerSeat({
                 backgroundImage: 'none'
             }}
         >
-            <img className="cat-bg" src={catImage} alt="Player background" />
-            {/* Timer Progress Bar */}
+            <img className="cat-bg" src={playerImage} alt="Player background" />
+            {/* Timer Progress Bar - Combined timebank + action */}
             {showTimer && (
                 <div className="seat-timer-container">
+                    {/* Timebank bar (amber) - on the left */}
                     <div
-                        className={`seat-timer-bar ${isLowTime ? 'low-time' : ''} ${isTimeBank ? 'time-bank' : ''}`}
-                        style={{ width: `${Math.min(timerPercent, 100)}%` }}
+                        className={`seat-timer-bar timebank-timer ${isLowTime && isTimeBank ? 'low-time' : ''}`}
+                        style={{ width: `${Math.min(timebankPercent, 100)}%` }}
                     />
+                    {/* Action timer bar (blue) - positioned after timebank */}
+                    <div
+                        className={`seat-timer-bar action-timer ${isLowTime && !isTimeBank ? 'low-time' : ''}`}
+                        style={{
+                            width: `${Math.min(actionPercent, 100)}%`,
+                            left: `${Math.min(timebankPercent, 100)}%`
+                        }}
+                    />
+                    <div className={`seat-timer-countdown ${isTimeBank ? 'time-bank' : ''}`}>
+                        {Math.ceil(timerState.remaining)}s
+                    </div>
                 </div>
             )}
 
@@ -206,7 +303,7 @@ export default function PlayerSeat({
                         </div>
                     ) : (
                         cardsToShow.length > 0 && (
-                            <div className="hole-cards">
+                            <div className={`hole-cards ${isFolded ? 'folded' : ''}`}>
                                 {cardsToShow.map((card, i) => (
                                     <PlayingCard key={i} card={card} />
                                 ))}

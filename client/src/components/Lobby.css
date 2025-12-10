@@ -3,7 +3,14 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: radial-gradient(circle at 50% 50%, var(--color-bg-dark), var(--color-bg-darker));
+    background-image: 
+        linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)),
+        url('https://scx2.b-cdn.net/gfx/news/hires/2013/studyshowsmo.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-color: var(--color-bg-darker);
     padding: var(--space-lg);
     position: relative;
     overflow: hidden;

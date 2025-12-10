@@ -34,6 +34,11 @@
     font-size: 1rem;
 }
 
+.action-buttons .btn-dimmed {
+    opacity: 0.5;
+    filter: grayscale(0.3);
+}
+
 .raise-controls {
     display: flex;
     flex-direction: column;

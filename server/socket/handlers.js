@@ -862,6 +862,40 @@ export function setupSocketHandlers(io, socket) {
 
         console.log(`[THROW] ${fromPlayer.nickname} threw ${itemId} at ${targetPlayer.nickname}`);
     });
+
+    // Rabbit Hunt - Reveal undealt community cards
+    socket.on('rabbit-hunt', () => {
+        console.log('[RABBIT-HUNT] Player triggered rabbit hunt:', socket.id);
+
+        const room = roomManager.getRoomBySocketId(socket.id);
+        if (!room || !room.game) {
+            console.log('[RABBIT-HUNT] No room or game found');
+            return;
+        }
+
+        // Check if rabbit hunt is allowed
+        if (!room.settings.allowRabbitHunt) {
+            socket.emit('error', { message: 'Rabbit hunt is disabled in this room' });
+            return;
+        }
+
+        // Trigger rabbit hunt
+        const result = room.game.triggerRabbitHunt();
+
+        if (!result.success) {
+            console.log('[RABBIT-HUNT] Failed:', result.message);
+            socket.emit('error', { message: result.message });
+            return;
+        }
+
+        // Broadcast revealed cards to all players in the room
+        console.log('[RABBIT-HUNT] Success! Revealing cards:', result.cards);
+        io.to(room.id).emit('rabbit-hunt-revealed', {
+            cards: result.cards,
+            communityCardsIfDealt: result.communityCardsIfDealt,
+            gameState: room.game.toJSON()
+        });
+    });
 }
 
 // Helper functions for timer management

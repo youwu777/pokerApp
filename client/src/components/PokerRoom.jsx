@@ -24,6 +24,7 @@ export default function PokerRoom() {
     const [isHost, setIsHost] = useState(false)
     const [holeCards, setHoleCards] = useState([])
     const [showdownHands, setShowdownHands] = useState([])
+    const [handWinners, setHandWinners] = useState([]) // Winners from any hand completion
     const [timerState, setTimerState] = useState(null)
     const [error, setError] = useState(null)
     const [roomNotFound, setRoomNotFound] = useState(false)
@@ -160,11 +161,13 @@ export default function PokerRoom() {
             console.log('Received hole cards:', holeCards)
             setHoleCards(holeCards)
             setShowdownHands([]) // Clear showdown hands on new deal
+            setHandWinners([]) // Clear winners on new deal
         })
 
         socket.on('new-hand', ({ gameState, roomState }) => {
             setRoomState(roomState)
             setShowdownHands([]) // Clear showdown hands
+            setHandWinners([]) // Clear winners
             setVisibleCommunityCards([]) // Reset visible community cards
             // Cards will be set by deal-cards event
         })
@@ -205,7 +208,7 @@ export default function PokerRoom() {
 
         socket.on('hand-complete', ({ results, roomState }) => {
             setRoomState(roomState)
-            setHoleCards([]) // Clear cards after hand ends
+            // Keep hole cards visible until next hand starts
             setTimerState(null) // Clear timer
             // Update visible community cards to show all cards
             if (roomState?.gameState?.communityCards) {
@@ -213,6 +216,10 @@ export default function PokerRoom() {
             }
             if (results.revealedHands) {
                 setShowdownHands(results.revealedHands)
+            }
+            // Store winners for coin animation (works for both showdown and non-showdown)
+            if (results.winners) {
+                setHandWinners(results.winners)
             }
             console.log('Hand complete:', results)
         })
@@ -245,6 +252,14 @@ export default function PokerRoom() {
                 fromPosition,
                 toPosition
             }])
+        })
+
+        socket.on('rabbit-hunt-revealed', ({ cards, communityCardsIfDealt, gameState }) => {
+            console.log('[RABBIT-HUNT] Cards revealed:', cards)
+            setRoomState(prev => ({
+                ...prev,
+                gameState: gameState
+            }))
         })
 
         socket.on('error', ({ message }) => {
@@ -411,7 +426,7 @@ export default function PokerRoom() {
 
     const handleThrowItem = (item, targetPlayer) => {
         if (!socket || !targetPlayer) return
-        
+
         console.log('[THROW] emitting', { item: item.id, targetPlayerId: targetPlayer.playerId, targetSocketId: targetPlayer.socketId })
 
         // Emit throw item event
@@ -420,6 +435,19 @@ export default function PokerRoom() {
             targetPlayerId: targetPlayer.playerId || targetPlayer.socketId,
             targetSocketId: targetPlayer.socketId
         })
+    }
+
+    const handleTriggerRabbitHunt = () => {
+        console.log('[RABBIT-HUNT] handleTriggerRabbitHunt called')
+        console.log('[RABBIT-HUNT] Socket exists:', !!socket)
+        console.log('[RABBIT-HUNT] Socket connected:', socket?.connected)
+
+        if (socket) {
+            console.log('[RABBIT-HUNT] Emitting rabbit-hunt event')
+            socket.emit('rabbit-hunt')
+        } else {
+            console.error('[RABBIT-HUNT] No socket connection!')
+        }
     }
 
     // Show loading while checking room
@@ -603,12 +631,14 @@ export default function PokerRoom() {
                         myPlayer={myPlayer}
                         holeCards={holeCards}
                         showdownHands={showdownHands}
+                        handWinners={handWinners}
                         timerState={timerState}
                         onSitDown={handleSitDown}
                         onStandUp={handleStandUp}
                         onPlayerAction={handlePlayerAction}
                         onThrowItem={handleThrowItem}
                         impactMarks={impactMarks}
+                        onTriggerRabbitHunt={handleTriggerRabbitHunt}
                     />
                 </div>
 

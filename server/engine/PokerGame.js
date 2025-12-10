@@ -31,6 +31,9 @@ export class PokerGame {
         this.bettingRound = null;
         this.players = [];
         this.lastAggressor = null; // Track who made the last aggressive action (bet/raise)
+        // Rabbit hunt
+        this.rabbitHuntCards = []; // Cards available for rabbit hunt
+        this.rabbitHuntRevealed = false; // Whether rabbit hunt has been triggered
         // Scoreboard is now stored at Room level, not Game level
     }
 
@@ -161,6 +164,17 @@ export class PokerGame {
         // Reset players for new hand
         this.players.forEach(p => p.resetForNewHand());
 
+        // Recharge timebank: add 1/5 of max timebank each hand (capped at max)
+        const maxTimebank = this.room.settings.timeBank;
+        const rechargeAmount = Math.floor(maxTimebank / 5);
+        this.players.forEach(p => {
+            if (p.seatNumber !== null) { // Only recharge for seated players
+                const newTimebank = Math.min(p.timeBank + rechargeAmount, maxTimebank);
+                console.log(`[TIMEBANK-RECHARGE] ${p.nickname}: ${p.timeBank}s + ${rechargeAmount}s = ${newTimebank}s (max: ${maxTimebank}s)`);
+                p.timeBank = newTimebank;
+            }
+        });
+
         // Add players to scoreboard if not already there (scoreboard is at Room level)
         this.players.forEach(player => {
             const key = player.playerId || player.sessionToken || player.socketId;
@@ -197,6 +211,10 @@ export class PokerGame {
         this.sidePots = [];
         this.currentStreet = 'preflop';
         this.lastAggressor = null;
+
+        // Reset rabbit hunt state
+        this.rabbitHuntCards = [];
+        this.rabbitHuntRevealed = false;
 
         // Move dealer button
         this.moveDealerButton();
@@ -563,11 +581,16 @@ export class PokerGame {
             });
             this.room.handCount++;
             this.bettingRound = null; // Clear betting round
+
+            // Calculate rabbit hunt cards (if hand ended early)
+            this.calculateRabbitHuntCards();
+
             return {
                 winners: [activePlayers[0]],
                 pot: this.pot,
                 winningHand: null,
-                showdown: false // Flag to indicate no showdown occurred
+                showdown: false, // Flag to indicate no showdown occurred
+                rabbitHunt: this.getRabbitHuntState()
             };
         }
 
@@ -578,6 +601,12 @@ export class PokerGame {
         const results = this.handleShowdown(activePlayers);
         this.room.handCount++;
         this.bettingRound = null; // Clear betting round to prevent further actions
+
+        // Calculate rabbit hunt cards (if hand ended early)
+        this.calculateRabbitHuntCards();
+
+        // Add rabbit hunt state to results
+        results.rabbitHunt = this.getRabbitHuntState();
 
         return results;
     }
@@ -872,6 +901,89 @@ export class PokerGame {
         };
     }
 
+    /**
+     * Calculate cards available for rabbit hunt
+     * Should be called when hand ends before river
+     */
+    calculateRabbitHuntCards() {
+        if (!this.room.settings.allowRabbitHunt) {
+            this.rabbitHuntCards = [];
+            return;
+        }
+
+        const cardsNeeded = 5 - this.communityCards.length;
+
+        if (cardsNeeded <= 0) {
+            // All community cards dealt, no rabbit hunt available
+            this.rabbitHuntCards = [];
+            return;
+        }
+
+        // Pop cards from deck (with burn cards)
+        this.rabbitHuntCards = [];
+        for (let i = 0; i < cardsNeeded; i++) {
+            if (this.deck.length < 2) {
+                console.error(`[RABBIT-HUNT] Not enough cards in deck!`);
+                break;
+            }
+            this.deck.pop(); // Burn card
+            const card = this.deck.pop();
+            if (card) {
+                this.rabbitHuntCards.push(card);
+            }
+        }
+
+        console.log(`[RABBIT-HUNT] ${this.rabbitHuntCards.length} cards available for rabbit hunt`);
+        this.rabbitHuntRevealed = false;
+    }
+
+    /**
+     * Trigger rabbit hunt - reveal the undealt cards
+     * Returns the revealed cards
+     */
+    triggerRabbitHunt() {
+        if (!this.room.settings.allowRabbitHunt) {
+            return { success: false, message: 'Rabbit hunt is disabled' };
+        }
+
+        // Ensure hand has ended and pot has been collected
+        if (this.bettingRound !== null) {
+            return { success: false, message: 'Hand is still in progress' };
+        }
+
+        if (this.rabbitHuntRevealed) {
+            return { success: false, message: 'Rabbit hunt already revealed' };
+        }
+
+        if (this.rabbitHuntCards.length === 0) {
+            return { success: false, message: 'No cards available for rabbit hunt' };
+        }
+
+        this.rabbitHuntRevealed = true;
+        console.log(`[RABBIT-HUNT] Revealed ${this.rabbitHuntCards.length} cards:`, this.rabbitHuntCards);
+
+        return {
+            success: true,
+            cards: this.rabbitHuntCards,
+            communityCardsIfDealt: [...this.communityCards, ...this.rabbitHuntCards]
+        };
+    }
+
+    /**
+     * Get rabbit hunt state for client
+     */
+    getRabbitHuntState() {
+        // Only make available if hand has ended (bettingRound is null)
+        const isHandEnded = this.bettingRound === null;
+
+        return {
+            available: isHandEnded && this.rabbitHuntCards.length > 0 && !this.rabbitHuntRevealed,
+            revealed: this.rabbitHuntRevealed,
+            cardCount: this.rabbitHuntCards.length,
+            cards: this.rabbitHuntRevealed ? this.rabbitHuntCards : null
+        };
+    }
+
     toJSON() {
         return {
             pot: this.pot,
@@ -881,7 +993,8 @@ export class PokerGame {
             bettingRound: this.bettingRound ? this.bettingRound.toJSON() : null,
             currentPlayer: this.bettingRound ? this.bettingRound.getCurrentPlayer()?.socketId : null,
             minRaise: this.bettingRound ? this.bettingRound.minRaise : 0,
-            currentBet: this.bettingRound ? this.bettingRound.currentBet : 0
+            currentBet: this.bettingRound ? this.bettingRound.currentBet : 0,
+            rabbitHunt: this.getRabbitHuntState()
         };
     }
 }

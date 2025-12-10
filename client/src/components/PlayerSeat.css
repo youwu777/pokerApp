@@ -241,10 +241,22 @@
 }
 
 .player-seat.winner {
-    border-color: #34d399;
-    box-shadow: 0 0 20px rgba(52, 211, 153, 0.6);
+    border-color: #fbbf24;
+    box-shadow: 0 0 30px rgba(251, 191, 36, 0.8), 0 0 60px rgba(251, 191, 36, 0.4);
     z-index: 10;
     transform: scale(1.05);
+    animation: winner-glow 2s ease-in-out infinite;
+}
+
+@keyframes winner-glow {
+    0%, 100% {
+        box-shadow: 0 0 30px rgba(251, 191, 36, 0.8), 0 0 60px rgba(251, 191, 36, 0.4);
+        border-color: #fbbf24;
+    }
+    50% {
+        box-shadow: 0 0 40px rgba(251, 191, 36, 1), 0 0 80px rgba(251, 191, 36, 0.6), 0 0 120px rgba(251, 191, 36, 0.3);
+        border-color: #fcd34d;
+    }
 }
 
 .waiting-overlay {
@@ -327,6 +339,9 @@
     text-overflow: ellipsis;
     max-width: 70px;
     margin-bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 1px 4px;
+    border-radius: 3px;
 }
 
 .you-badge {
@@ -364,6 +379,11 @@
 .hole-cards {
     display: flex;
     gap: 4px;
+}
+
+.hole-cards.folded {
+    opacity: 0.4;
+    filter: grayscale(0.5);
 }
 
 /* Adjust card size if needed via PlayingCard.css, but here we ensure container fits */
@@ -525,6 +545,20 @@
 
 .empty-seat {
     background: transparent !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.empty-seat .btn {
+    background: #2563eb;
+    color: white;
+    border-color: #2563eb;
+}
+
+.empty-seat .btn:hover {
+    background: #1d4ed8;
+    border-color: #1d4ed8;
 }
 
 .empty-seat:hover {
@@ -546,26 +580,49 @@
     height: 4px;
     background: rgba(255, 255, 255, 0.1);
     z-index: 1;
-    overflow: hidden;
+    overflow: visible;
     border-radius: 0 0 12px 12px;
 }
 
 .seat-timer-bar {
+    position: absolute;
     height: 100%;
-    background: #3b82f6;
-    /* Blue default */
-    transition: width 1s linear, background-color 0.3s ease;
+    transition: width 1s linear, left 1s linear;
 }
 
+/* Action timer (blue) */
+.seat-timer-bar.action-timer {
+    background: #3b82f6;
+    left: 0;
+}
+
+/* Timebank timer (amber) */
+.seat-timer-bar.timebank-timer {
+    background: #f59e0b;
+}
+
+/* Low time warning (red) */
 .seat-timer-bar.low-time {
     background: #ef4444;
-    /* Red warning */
     animation: pulse-red 1s infinite;
 }
 
-.seat-timer-bar.time-bank {
-    background: #f59e0b;
-    /* Amber for time bank */
+.seat-timer-countdown {
+    position: absolute;
+    top: -24px;
+    right: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #3b82f6;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 2px 6px;
+    border-radius: 4px;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.seat-timer-countdown.time-bank {
+    color: #f59e0b;
 }
 
 @keyframes fadeIn {

@@ -65,6 +65,7 @@ export class PlayerTimer {
         this.roomId = roomId;
         this.usingTimeBank = false;
         this.customOnExpire = null; // Allow custom expire handler to be set
+        this.timebankUsedThisTurn = 0; // Track how much timebank was used this turn
 
         this.timer = new Timer(
             actionTime,
@@ -79,6 +80,20 @@ export class PlayerTimer {
 
     stop() {
         this.timer.stop();
+        this.chargeTimebank(); // Deduct used timebank when timer stops
+    }
+
+    chargeTimebank() {
+        // If timebank was used this turn, deduct it from player's balance
+        if (this.usingTimeBank && this.timebankStartAmount !== undefined) {
+            const timebankUsed = this.timebankStartAmount - this.timer.remaining;
+            this.timebankUsedThisTurn = timebankUsed;
+
+            // Deduct from player's timebank
+            this.player.timeBank = Math.max(0, this.timer.remaining);
+
+            console.log(`[TIMEBANK] ${this.player.nickname} used ${timebankUsed}s of timebank. Remaining: ${this.player.timeBank}s`);
+        }
     }
 
     onTick(remaining) {
@@ -86,12 +101,14 @@ export class PlayerTimer {
         this.io.to(this.roomId).emit('timer-tick', {
             playerId: this.player.socketId,
             remaining,
-            usingTimeBank: this.usingTimeBank
+            usingTimeBank: this.usingTimeBank,
+            timebankRemaining: this.player.timeBank || 0 // Send player's remaining timebank
         });
 
         // Switch to time bank when action timer expires
         if (remaining <= 0 && !this.usingTimeBank && this.player.timeBank > 0) {
             this.usingTimeBank = true;
+            this.timebankStartAmount = this.player.timeBank; // Record starting timebank
             this.timer.reset(this.player.timeBank);
             this.timer.start();
         }
@@ -116,6 +133,7 @@ export class PlayerTimer {
     useTimeBank() {
         if (!this.usingTimeBank && this.player.timeBank > 0) {
             this.usingTimeBank = true;
+            this.timebankStartAmount = this.player.timeBank; // Record starting timebank
             this.timer.reset(this.player.timeBank);
             this.timer.start();
         }

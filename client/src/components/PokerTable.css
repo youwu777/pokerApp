@@ -12,8 +12,8 @@
     width: 1000px;
     height: 500px;
     background: var(--gradient-felt);
-    border: 12px solid var(--color-gold-dark);
-    border-radius: 100px;
+    border: 20px solid var(--color-gold-dark);
+    border-radius: 250px;
     /* Rectangular with rounded corners */
     box-shadow:
         inset 0 0 60px rgba(0, 0, 0, 0.4),
@@ -22,6 +22,19 @@
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+/* Inner white oval betting line */
+.poker-table::after {
+    content: '';
+    position: absolute;
+    top: 80px;
+    left: 80px;
+    right: 80px;
+    bottom: 80px;
+    border: 4px solid rgba(255, 255, 255, 0.616);
+    border-radius: 170px;
+    pointer-events: none;
 }
 
 .table-center {
@@ -209,6 +222,8 @@
     .poker-table-wrapper {
         width: 100%;
         padding: 5px;
+        padding-top: 120px; /* Space for top player seat on mobile */
+        padding-bottom: 100px; /* Space for bottom player seat on mobile */
         overflow: visible;
         position: relative;
     }
@@ -216,11 +231,19 @@
     .poker-table {
         width: 100%;
         max-width: 320px;
-        height: 480px; /* Optimized height for mobile */
+        height: 510px; /* Increased height for mobile */
         border-width: 5px;
-        border-radius: 35px;
+        border-radius: 240px;
         margin: 0 auto;
         position: relative;
+    }
+    
+    .poker-table::after {
+        top: 80px;
+        left: 50px;
+        right: 50px;
+        bottom: 80px;
+        border-radius: 120px;
     }
 
     .table-center {

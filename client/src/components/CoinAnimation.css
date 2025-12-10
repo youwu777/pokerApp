@@ -1,0 +1,62 @@
+.coin-animation-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 100;
+}
+
+.flying-coin {
+    position: fixed;
+    font-size: 2rem;
+    opacity: 0;
+    animation: fly-to-winner 1.5s ease-in-out forwards;
+}
+
+.coin-spinner {
+    display: inline-block;
+    animation: coin-spin 1.5s linear forwards;
+}
+
+@keyframes fly-to-winner {
+    0% {
+        opacity: 1;
+        left: var(--start-x);
+        top: var(--start-y);
+        transform: translate(-50%, -50%) scale(0.6);
+    }
+    100% {
+        opacity: 0;
+        left: var(--target-x);
+        top: var(--target-y);
+        transform: translate(-50%, -50%) scale(0.6);
+    }
+}
+
+@keyframes coin-spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(1080deg);
+    }
+}
+
+/* Add randomness to coin trajectories */
+.flying-coin:nth-child(2n) {
+    animation-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.flying-coin:nth-child(3n) {
+    animation-timing-function: cubic-bezier(0.55, 0.085, 0.68, 0.53);
+}
+
+.flying-coin:nth-child(5n) {
+    font-size: 1.8rem;
+}
+
+.flying-coin:nth-child(7n) {
+    font-size: 2.2rem;
+}

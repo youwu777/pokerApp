@@ -1,7 +1,8 @@
 import { v4 as uuidv4 } from 'uuid';
+import { getRandomAvatar } from '../utils/avatarImages.js';
 
 export class Player {
-    constructor(socketId, nickname, buyinAmount = 1000, sessionToken = null, playerId = null) {
+    constructor(socketId, nickname, buyinAmount = 1000, sessionToken = null, playerId = null, avatarImage = null) {
         this.socketId = socketId;
         this.sessionToken = sessionToken; // Stable identity across reconnects
         this.playerId = playerId || uuidv4(); // Stable UUID independent of socket/session
@@ -21,6 +22,7 @@ export class Player {
         this.standUpNextHand = false;
         this.isConnected = true; // Connection status for reconnection handling
         this.disconnectedAt = null;
+        this.avatarImage = avatarImage || getRandomAvatar(); // Random avatar image
     }
 
     sitDown(seatNumber, timeBank) {
@@ -96,6 +98,7 @@ export class Player {
             position: this.position,
             standUpNextHand: this.standUpNextHand,
             isConnected: this.isConnected,
+            avatarImage: this.avatarImage,
             // Don't include hole cards in public JSON
         };
     }
