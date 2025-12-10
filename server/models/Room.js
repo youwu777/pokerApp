@@ -17,6 +17,7 @@ export class Room {
         this.players = []; // Array of Player objects
         this.game = null; // PokerGame instance when active
         this.isPaused = false;
+        this.endGameAfterHand = false; // Flag to end game after current hand completes
         this.handCount = 0;
         this.chatHistory = [];
         this.scoreboard = new Map(); // Track all players who have played (playerId -> player stats)

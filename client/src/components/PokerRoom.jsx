@@ -266,8 +266,8 @@ export default function PokerRoom() {
                 setShowdownHands(results.revealedHands)
             }
             // Store winners for coin animation (works for both showdown and non-showdown)
-            // Only set winners if hand is actually complete (bettingRound should be null)
-            if (results.winners && !roomState?.gameState?.bettingRound) {
+            // Set winners if they exist (hand-complete event means hand is over)
+            if (results.winners && results.winners.length > 0) {
                 setHandWinners(results.winners)
             }
         })
@@ -354,6 +354,24 @@ export default function PokerRoom() {
             }))
         })
 
+        socket.on('game-stopped', ({ roomState: newRoomState }) => {
+            setRoomState(newRoomState)
+            setTimerState(null)
+            setHandWinners([])
+            setShowdownHands([])
+        })
+
+        socket.on('game-ended', ({ roomState: newRoomState }) => {
+            setRoomState(newRoomState)
+            setTimerState(null)
+            setHandWinners([])
+            setShowdownHands([])
+        })
+
+        socket.on('game-stopping', ({ roomState: newRoomState }) => {
+            setRoomState(newRoomState)
+        })
+
         socket.on('error', ({ message }) => {
             if (message === 'Room not found') {
                 setRoomNotFound(true)
@@ -391,6 +409,10 @@ export default function PokerRoom() {
             socket.off('hand-complete')
             socket.off('chat-message')
             socket.off('item-thrown')
+            socket.off('rabbit-hunt-revealed')
+            socket.off('game-stopped')
+            socket.off('game-ended')
+            socket.off('game-stopping')
             socket.off('error')
             socket.off('connect')
         }

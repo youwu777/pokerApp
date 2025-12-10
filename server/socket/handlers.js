@@ -355,6 +355,17 @@ export function setupSocketHandlers(io, socket) {
                     // Update room state after stand-ups
                     io.to(currentRoom.id).emit('room-state', currentRoom.toJSON());
 
+                    // Check if game should end after this hand
+                    if (currentRoom.endGameAfterHand) {
+                        console.log('[END-GAME] Ending game after hand completion');
+                        currentRoom.game = null;
+                        currentRoom.endGameAfterHand = false;
+                        io.to(currentRoom.id).emit('game-ended', {
+                            roomState: currentRoom.toJSON()
+                        });
+                        return;
+                    }
+
                     // Check if there are enough seated players to start
                     const seatedPlayers = currentRoom.getSeatedPlayers();
                     if (seatedPlayers.length < 2) {
@@ -387,7 +398,7 @@ export function setupSocketHandlers(io, socket) {
                     console.error('[ERROR] Auto-start failed:', error);
                     io.to(room.id).emit('error', { message: 'Failed to start next hand' });
                 }
-            }, 5000);
+            }, 8000);
 
             return; // Don't broadcast player-acted or continue game flow - hand is over
         }
@@ -471,6 +482,17 @@ export function setupSocketHandlers(io, socket) {
 
                                     io.to(currentRoom.id).emit('room-state', currentRoom.toJSON());
 
+                                    // Check if game should end after this hand
+                                    if (currentRoom.endGameAfterHand) {
+                                        console.log('[END-GAME] Ending game after hand completion');
+                                        currentRoom.game = null;
+                                        currentRoom.endGameAfterHand = false;
+                                        io.to(currentRoom.id).emit('game-ended', {
+                                            roomState: currentRoom.toJSON()
+                                        });
+                                        return;
+                                    }
+
                                     const seatedPlayers = currentRoom.getSeatedPlayers();
                                     if (seatedPlayers.length < 2) {
                                         currentRoom.game = null;
@@ -496,7 +518,7 @@ export function setupSocketHandlers(io, socket) {
                                     console.error('[ERROR] Auto-start failed after all-in:', error);
                                     io.to(room.id).emit('error', { message: 'Failed to start next hand' });
                                 }
-                            }, 5000);
+                            }, 8000);
                         }, 1500); // Wait 1.5 seconds after last card before ending hand
                     }
                 }, index * 1500); // 1.5 second delay between each card
@@ -782,6 +804,54 @@ export function setupSocketHandlers(io, socket) {
         });
     });
 
+    // End game after current hand
+    socket.on('end-game', () => {
+        const room = roomManager.getRoomBySocketId(socket.id);
+        if (!room) return;
+
+        if (!room.isHost(socket.id)) {
+            socket.emit('error', { message: 'Only host can end game' });
+            return;
+        }
+
+        // Set flag to end game after current hand completes
+        room.endGameAfterHand = true;
+        console.log('[END-GAME] Game will end after current hand completes');
+
+        io.to(room.id).emit('game-ending', {
+            roomState: room.toJSON()
+        });
+    });
+
+    // Stop game immediately (if no hand in progress) or after current hand
+    socket.on('stop-game', () => {
+        const room = roomManager.getRoomBySocketId(socket.id);
+        if (!room) return;
+
+        if (!room.isHost(socket.id)) {
+            socket.emit('error', { message: 'Only host can stop game' });
+            return;
+        }
+
+        // If game is in progress, set flag to end after current hand
+        if (room.game && room.game.bettingRound) {
+            room.endGameAfterHand = true;
+            console.log('[STOP-GAME] Game will stop after current hand completes');
+            io.to(room.id).emit('game-stopping', {
+                roomState: room.toJSON()
+            });
+        } else {
+            // No active hand, stop immediately
+            stopPlayerTimer(room.id);
+            room.game = null;
+            room.endGameAfterHand = false;
+            console.log('[STOP-GAME] Game stopped immediately');
+            io.to(room.id).emit('game-stopped', {
+                roomState: room.toJSON()
+            });
+        }
+    });
+
     // Update settings
     socket.on('update-settings', ({ settings }) => {
         const room = roomManager.getRoomBySocketId(socket.id);
@@ -970,6 +1040,17 @@ function startPlayerTimer(io, room) {
 
                     io.to(currentRoom.id).emit('room-state', currentRoom.toJSON());
 
+                    // Check if game should end after this hand
+                    if (currentRoom.endGameAfterHand) {
+                        console.log('[END-GAME] Ending game after hand completion');
+                        currentRoom.game = null;
+                        currentRoom.endGameAfterHand = false;
+                        io.to(currentRoom.id).emit('game-ended', {
+                            roomState: currentRoom.toJSON()
+                        });
+                        return;
+                    }
+
                     const seatedPlayers = currentRoom.getSeatedPlayers();
                     if (seatedPlayers.length < 2) {
                         currentRoom.game = null;
@@ -995,7 +1076,7 @@ function startPlayerTimer(io, room) {
                     console.error('[ERROR] Auto-start failed after all-in:', error);
                     io.to(room.id).emit('error', { message: 'Failed to start next hand' });
                 }
-            }, 5000);
+            }, 8000);
         } else {
             // Advanced to next street, start timer for first player
             io.to(room.id).emit('room-state', room.toJSON());
@@ -1099,6 +1180,17 @@ function startPlayerTimer(io, room) {
 
                     io.to(currentRoom.id).emit('room-state', currentRoom.toJSON());
 
+                    // Check if game should end after this hand
+                    if (currentRoom.endGameAfterHand) {
+                        console.log('[END-GAME] Ending game after hand completion');
+                        currentRoom.game = null;
+                        currentRoom.endGameAfterHand = false;
+                        io.to(currentRoom.id).emit('game-ended', {
+                            roomState: currentRoom.toJSON()
+                        });
+                        return;
+                    }
+
                     const seatedPlayers = currentRoom.getSeatedPlayers();
                     if (seatedPlayers.length < 2) {
                         currentRoom.game = null;
@@ -1124,7 +1216,7 @@ function startPlayerTimer(io, room) {
                     console.error('[ERROR] Auto-start failed after timeout:', error);
                     io.to(room.id).emit('error', { message: 'Failed to start next hand' });
                 }
-            }, 5000);
+            }, 8000);
             return;
         }
 

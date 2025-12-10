@@ -885,10 +885,25 @@ export class PokerGame {
             }
         });
 
+        // Collect all unique winners from all pot results for coin animation
+        const allWinnerSocketIds = new Set();
+        potResults.forEach(potResult => {
+            potResult.winners.forEach(socketId => allWinnerSocketIds.add(socketId));
+        });
+        const winners = this.players.filter(player => 
+            allWinnerSocketIds.has(player.socketId) && player.seatNumber !== null
+        ).map(player => ({
+            socketId: player.socketId,
+            playerId: player.playerId,
+            nickname: player.nickname,
+            seatNumber: player.seatNumber
+        }));
+
         return {
             showdown: true,
             revealedHands: revealedHands,
             potResults: potResults,
+            winners: winners, // Add winners array for coin animation
             communityCards: this.communityCards
         };
     }

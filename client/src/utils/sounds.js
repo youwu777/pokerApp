@@ -1,5 +1,7 @@
 // Sound effects using Web Audio API
 import coinSpillSound from '../components/sound/coin-spill-105867.mp3'
+import allInPushChipsSound from '../components/sound/allinpushchips-96121.mp3'
+import checkSound from '../components/sound/check.mp3'
 
 class SoundManager {
     constructor() {
@@ -27,6 +29,16 @@ class SoundManager {
             const coinSound = new Audio(coinSpillSound)
             coinSound.preload = 'auto'
             this.audioFiles['coinCollect'] = coinSound
+
+            // Preload all-in push chips sound
+            const allInSound = new Audio(allInPushChipsSound)
+            allInSound.preload = 'auto'
+            this.audioFiles['allInPushChips'] = allInSound
+
+            // Preload check sound
+            const checkAudio = new Audio(checkSound)
+            checkAudio.preload = 'auto'
+            this.audioFiles['check'] = checkAudio
         } catch (e) {
             console.warn('Failed to preload audio files:', e)
         }
@@ -109,14 +121,56 @@ class SoundManager {
         })
     }
 
-    // Check sound - light, quick
+    // Check sound - play MP3 file
     playCheck() {
-        this.playTone(440, 0.15, 'sine', 0.2) // A note
+        if (!this.enabled) return
+
+        try {
+            const checkAudio = this.audioFiles['check']
+            if (checkAudio) {
+                // Clone and play to allow overlapping sounds
+                const audio = checkAudio.cloneNode()
+                audio.volume = 0.5
+                audio.play().catch(e => {
+                    console.warn('Failed to play check sound:', e)
+                })
+            } else {
+                // Fallback: try to load on demand if preload failed
+                const audio = new Audio(checkSound)
+                audio.volume = 0.5
+                audio.play().catch(e => {
+                    console.warn('Failed to play check sound:', e)
+                })
+            }
+        } catch (e) {
+            console.warn('Error playing check sound:', e)
+        }
     }
 
-    // Call/Raise sound - more substantial
+    // Call/Raise sound - play MP3 file
     playCallRaise() {
-        this.playChord([392, 493.88], 0.25, 'sine', 0.3) // G-B chord
+        if (!this.enabled) return
+
+        try {
+            const allInSound = this.audioFiles['allInPushChips']
+            if (allInSound) {
+                // Clone and play to allow overlapping sounds
+                const audio = allInSound.cloneNode()
+                audio.volume = 0.5
+                audio.play().catch(e => {
+                    console.warn('Failed to play all-in push chips sound:', e)
+                })
+            } else {
+                // Fallback: try to load on demand if preload failed
+                const audio = new Audio(allInPushChipsSound)
+                audio.volume = 0.5
+                audio.play().catch(e => {
+                    console.warn('Failed to play all-in push chips sound:', e)
+                })
+            }
+        } catch (e) {
+            console.warn('Error playing all-in push chips sound:', e)
+        }
     }
 
     // Fold/Timeout sound - sad, descending tone
@@ -269,14 +323,14 @@ class SoundManager {
             if (coinSound) {
                 // Clone and play to allow overlapping sounds
                 const audio = coinSound.cloneNode()
-                audio.volume = 0.3
+                audio.volume = 0.4
                 audio.play().catch(e => {
                     console.warn('Failed to play coin collect sound:', e)
                 })
             } else {
                 // Fallback: try to load on demand if preload failed
                 const audio = new Audio(coinSpillSound)
-                audio.volume = 0.3
+                audio.volume = 0.4
                 audio.play().catch(e => {
                     console.warn('Failed to play coin collect sound:', e)
                 })
