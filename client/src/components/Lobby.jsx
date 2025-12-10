@@ -44,31 +44,33 @@ export default function Lobby() {
                 </div>
 
                 <div className="lobby-actions">
-                    <div className="action-card">
+                    <div 
+                        className="action-card action-card-clickable"
+                        onClick={() => setShowSettings(true)}
+                        onKeyDown={(e) => e.key === 'Enter' && setShowSettings(true)}
+                        role="button"
+                        tabIndex={0}
+                    >
                         <div className="action-icon">🎮</div>
                         <h3>Create New Game</h3>
                         <p className="text-muted">
                             Host a private table and invite your friends
                         </p>
-                        <button
-                            className="btn btn-primary btn-lg"
-                            onClick={() => setShowSettings(true)}
-                        >
-                            New Game
-                        </button>
                     </div>
 
-                    <div className="action-divider">
-                        <span>OR</span>
-                    </div>
-
-                    <div className="action-card">
+                    <div 
+                        className="action-card action-card-clickable"
+                        onClick={handleJoinGame}
+                        onKeyDown={(e) => e.key === 'Enter' && handleJoinGame()}
+                        role="button"
+                        tabIndex={0}
+                    >
                         <div className="action-icon">🔗</div>
                         <h3>Join Game</h3>
                         <p className="text-muted">
                             Enter room code to join an existing game
                         </p>
-                        <div className="join-form">
+                        <div className="join-form" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
                             <input
                                 type="text"
                                 className="input"
@@ -77,13 +79,6 @@ export default function Lobby() {
                                 onChange={(e) => setJoinRoomId(e.target.value)}
                                 onKeyPress={(e) => e.key === 'Enter' && handleJoinGame()}
                             />
-                            <button
-                                className="btn btn-success btn-lg"
-                                onClick={handleJoinGame}
-                                disabled={!joinRoomId.trim()}
-                            >
-                                Join
-                            </button>
                         </div>
                     </div>
                 </div>
