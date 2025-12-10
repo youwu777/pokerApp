@@ -15,6 +15,7 @@ export default function PokerTable({
     onPlayerAction,
     visibleCommunityCards,
     onThrowItem,
+    onKickPlayer,
     impactMarks,
     onTriggerRabbitHunt,
     activeChatBubbles = [],
@@ -22,6 +23,7 @@ export default function PokerTable({
 }) {
     const gameState = roomState?.gameState
     const players = roomState?.players || []
+    const isHost = roomState?.hostSocketId === myPlayer?.socketId
     
     // Use visibleCommunityCards if provided (for progressive reveal), otherwise use gameState.communityCards
     const communityCards = visibleCommunityCards && visibleCommunityCards.length > 0 
@@ -113,6 +115,8 @@ export default function PokerTable({
                                     isViewerSeated={isViewerSeated}
                                     myPlayer={myPlayer}
                                     onThrowItem={onThrowItem}
+                                    onKickPlayer={onKickPlayer}
+                                    isHost={isHost}
                                     impactMarks={impactMarks?.[player?.playerId] || impactMarks?.[player?.socketId] || []}
                                 />
                                 {seatChatBubble && (

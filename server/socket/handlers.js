@@ -229,6 +229,51 @@ export function setupSocketHandlers(io, socket) {
         io.to(room.id).emit('room-state', room.toJSON());
     });
 
+    // Host kicks a player from their seat
+    socket.on('kick-player', (targetSocketId) => {
+        const room = roomManager.getRoomBySocketId(socket.id);
+        if (!room) return;
+
+        // Only host can kick players
+        if (!room.isHost(socket.id)) {
+            socket.emit('error', { message: 'Only room owner can kick players' });
+            return;
+        }
+
+        const targetPlayer = room.getPlayer(targetSocketId);
+        if (!targetPlayer || targetPlayer.seatNumber === null) {
+            socket.emit('error', { message: 'Player not found or not seated' });
+            return;
+        }
+
+        // If game is in progress and player is involved, mark for stand up next hand
+        if (room.game && (targetPlayer.status === 'active' || targetPlayer.status === 'all-in' || targetPlayer.status === 'folded')) {
+            targetPlayer.standUpNextHand = true;
+            io.to(room.id).emit('room-state', room.toJSON());
+
+            // Notify the kicked player
+            const targetSocket = io.sockets.sockets.get(targetSocketId);
+            if (targetSocket) {
+                targetSocket.emit('notification', { message: 'Room owner has removed you from the seat. You will stand up after this hand.' });
+            }
+            return;
+        }
+
+        // If no game in progress, stand up immediately
+        targetPlayer.standUp();
+
+        // Update scoreboard with final stack
+        upsertScoreboard(room, targetPlayer, true);
+
+        io.to(room.id).emit('room-state', room.toJSON());
+
+        // Notify the kicked player
+        const targetSocket = io.sockets.sockets.get(targetSocketId);
+        if (targetSocket) {
+            targetSocket.emit('notification', { message: 'Room owner has removed you from the seat.' });
+        }
+    });
+
     // Start game / new hand
     socket.on('start-hand', () => {
         const room = roomManager.getRoomBySocketId(socket.id);

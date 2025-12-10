@@ -13,7 +13,7 @@ const fallbackImage = '/image.png'
 // Function to get a consistent image for a player based on their ID
 function getPlayerImage(playerId) {
     if (!playerId || availableImages.length === 0) return fallbackImage
-    
+
     // Simple hash function to convert playerId to a number
     let hash = 0
     for (let i = 0; i < playerId.length; i++) {
@@ -21,7 +21,7 @@ function getPlayerImage(playerId) {
         hash = ((hash << 5) - hash) + char
         hash = hash & hash // Convert to 32bit integer
     }
-    
+
     // Use absolute value and modulo to get index
     const index = Math.abs(hash) % availableImages.length
     return availableImages[index] || fallbackImage
@@ -42,6 +42,8 @@ export default function PlayerSeat({
     isViewerSeated,
     myPlayer,
     onThrowItem,
+    onKickPlayer,
+    isHost,
     impactMarks = []
 }) {
     const [showThrowMenu, setShowThrowMenu] = useState(false)
@@ -51,9 +53,18 @@ export default function PlayerSeat({
     // Get player's background image based on their ID (consistent for same player)
     // Must be called before any early returns (React Hook rules)
     const playerImage = useMemo(() => {
+        // Hardcoded: Use lsr.png for player with nickname "老实人"
+        if (player?.nickname === '老实人') {
+            try {
+                return new URL('../lsr.png', import.meta.url).href
+            } catch (e) {
+                console.error('Failed to load lsr.png:', e)
+                // Fall through to default logic
+            }
+        }
         const playerId = player?.playerId || player?.socketId
         return getPlayerImage(playerId)
-    }, [player?.playerId, player?.socketId])
+    }, [player?.playerId, player?.socketId, player?.nickname])
     
     if (!player) {
         if (isViewerSeated) {
@@ -354,6 +365,29 @@ export default function PlayerSeat({
                     title={isStandingUpNext ? "Cancel Stand Up" : "Stand Up"}
                 >
                     {isStandingUpNext ? '↩' : '×'}
+                </button>
+            )}
+
+            {/* Kick button (only for host viewing other players) */}
+            {isHost && !isMe && player && onKickPlayer && (
+                <button
+                    className="btn-kick-player"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        const confirmed = window.confirm(
+                            `Remove ${player.nickname} from their seat?${
+                                isStandingUpNext
+                                    ? '\n\n(Already marked to stand up after this hand)'
+                                    : ''
+                            }`
+                        );
+                        if (confirmed) {
+                            onKickPlayer(player);
+                        }
+                    }}
+                    title={isStandingUpNext ? "Player will stand up after this hand" : "Remove player from seat"}
+                >
+                    {isStandingUpNext ? '⚠' : '🚫'}
                 </button>
             )}
 

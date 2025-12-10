@@ -565,6 +565,12 @@ export default function PokerRoom() {
         }
     }
 
+    const handleKickPlayer = (targetPlayer) => {
+        if (socket && targetPlayer) {
+            socket.emit('kick-player', targetPlayer.socketId)
+        }
+    }
+
     // Show loading while checking room
     if (checkingRoom) {
         return (
@@ -752,6 +758,7 @@ export default function PokerRoom() {
                         onStandUp={handleStandUp}
                         onPlayerAction={handlePlayerAction}
                         onThrowItem={handleThrowItem}
+                        onKickPlayer={handleKickPlayer}
                         impactMarks={impactMarks}
                         onTriggerRabbitHunt={handleTriggerRabbitHunt}
                         activeChatBubbles={activeChatBubbles}
