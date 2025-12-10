@@ -36,8 +36,7 @@ export default function Lobby() {
             <div className="lobby-content">
                 <div className="lobby-header">
                     <h1 className="lobby-title">
-                        <span className="title-icon">🃏</span>
-                        Honest Poker
+                        老实德州
                     </h1>
                     <p className="lobby-subtitle">
                         Private Texas Hold'em • Play with Friends
