@@ -8,7 +8,8 @@ export default function ActionPanel({
     myChips,
     minRaise,
     pot,
-    onAction
+    onAction,
+    timerState
 }) {
     const [raiseAmount, setRaiseAmount] = useState(minRaise)
 
@@ -53,6 +54,47 @@ export default function ActionPanel({
         setRaiseAmount(validAmount)
     }
 
+    // Timer logic - Combined action timer + timebank into one continuous bar
+    const showTimer = isMyTurn && timerState && timerState.remaining !== undefined
+
+    // Calculate separate percentages for action timer and timebank
+    let actionPercent = 0
+    let timebankPercent = 0
+    let isLowTime = false
+    let isTimeBank = false
+    let timerCountdown = 0
+
+    if (showTimer) {
+        const actionTime = 30 // Action timer duration
+
+        // During timebank phase, timebankRemaining might equal remaining
+        let timebankTotal
+        let totalTime
+
+        if (timerState.usingTimeBank) {
+            // In timebank: use remaining as the max timebank (first tick of timebank phase)
+            timebankTotal = timerState.timebankRemaining ?? 60
+            totalTime = actionTime + timebankTotal
+
+            // Action time is done, show only timebank remaining
+            actionPercent = 0
+            timebankPercent = (timerState.remaining / totalTime) * 100
+            isTimeBank = true
+        } else {
+            // In action phase: timebank hasn't been touched yet
+            timebankTotal = timerState.timebankRemaining ?? 60
+            totalTime = actionTime + timebankTotal
+
+            // Show action time counting down + full timebank
+            actionPercent = (timerState.remaining / totalTime) * 100
+            timebankPercent = (timebankTotal / totalTime) * 100
+            isTimeBank = false
+        }
+
+        isLowTime = timerState.remaining <= 5
+        timerCountdown = Math.ceil(timerState.remaining)
+    }
+
     if (!isMyTurn) {
         return (
             <div className="action-panel disabled">
@@ -65,6 +107,28 @@ export default function ActionPanel({
 
     return (
         <div className="action-panel">
+            {/* Timer Bar */}
+            {showTimer && (
+                <div className="action-timer-container">
+                    {/* Timebank bar (amber) - on the left */}
+                    <div
+                        className={`action-timer-bar timebank-timer ${isLowTime && isTimeBank ? 'low-time' : ''}`}
+                        style={{ width: `${Math.min(timebankPercent, 100)}%` }}
+                    />
+                    {/* Action timer bar (blue) - positioned after timebank */}
+                    <div
+                        className={`action-timer-bar action-timer ${isLowTime && !isTimeBank ? 'low-time' : ''}`}
+                        style={{
+                            width: `${Math.min(actionPercent, 100)}%`,
+                            left: `${Math.min(timebankPercent, 100)}%`
+                        }}
+                    />
+                    <div className={`action-timer-countdown ${isTimeBank ? 'time-bank' : ''}`}>
+                        {timerCountdown}s
+                    </div>
+                </div>
+            )}
+
             <div className="action-buttons">
                 <button
                     className={`btn btn-danger ${canCheck ? 'btn-dimmed' : ''}`}

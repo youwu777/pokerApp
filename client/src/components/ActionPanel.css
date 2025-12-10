@@ -8,6 +8,61 @@
     height: 100%;
     display: flex;
     flex-direction: column;
+    position: relative;
+    z-index: 1;
+}
+
+.action-timer-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    overflow: hidden;
+    z-index: 10;
+}
+
+.action-timer-bar {
+    position: absolute;
+    height: 100%;
+    transition: width 1s linear, left 1s linear;
+    top: 0;
+}
+
+/* Action timer (blue) */
+.action-timer-bar.action-timer {
+    background: #3b82f6;
+    left: 0;
+}
+
+/* Timebank timer (amber) */
+.action-timer-bar.timebank-timer {
+    background: #f59e0b;
+}
+
+/* Low time warning (red) */
+.action-timer-bar.low-time {
+    background: #ef4444;
+    animation: pulse-red 1s infinite;
+}
+
+.action-timer-countdown {
+    display: none; /* Hide countdown text */
+}
+
+.action-timer-countdown.time-bank {
+    display: none; /* Hide countdown text */
+}
+
+@keyframes pulse-red {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
 }
 
 .action-panel.disabled {
@@ -26,6 +81,7 @@
     flex-direction: column;
     gap: var(--space-md);
     margin-bottom: var(--space-md);
+    margin-top: var(--space-sm);
 }
 
 .action-buttons .btn {
@@ -127,6 +183,15 @@
     max-width: 100%;
     overflow: visible;
     width: 100%;
+}
+
+.mobile-action-panel .action-timer-container {
+    height: 8px;
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+
+.mobile-action-panel .action-timer-countdown {
+    display: none; /* Hide countdown text on mobile */
 }
 
 .mobile-action-panel .action-buttons {

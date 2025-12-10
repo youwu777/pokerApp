@@ -653,6 +653,7 @@ export default function PokerRoom() {
                             minRaise={roomState.gameState.minRaise}
                             pot={roomState.gameState.pot}
                             onAction={handlePlayerAction}
+                            timerState={timerState && timerState.playerId === myPlayer.socketId ? timerState : null}
                         />
                     )}
                 </div>
@@ -668,6 +669,7 @@ export default function PokerRoom() {
                             minRaise={roomState.gameState.minRaise}
                             pot={roomState.gameState.pot}
                             onAction={handlePlayerAction}
+                            timerState={timerState && timerState.playerId === myPlayer.socketId ? timerState : null}
                         />
                     </div>
                 )}

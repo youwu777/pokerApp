@@ -12,9 +12,13 @@ export default function RabbitHuntCards({ rabbitHunt, onTriggerRabbitHunt }) {
 
     // If rabbit hunt is revealed, show the actual cards (same as regular cards)
     if (rabbitHunt.revealed && rabbitHunt.cards) {
-        return rabbitHunt.cards.map((card, i) => (
-            <PlayingCard key={`rabbit-${i}`} card={card} />
-        ))
+        return (
+            <>
+                {rabbitHunt.cards.map((card, i) => (
+                    <PlayingCard key={`rabbit-${i}`} card={card} />
+                ))}
+            </>
+        )
     }
 
     // If rabbit hunt is available, show face-down cards with rabbit emoji
