@@ -10,6 +10,9 @@ import { setupSocketHandlers } from './socket/handlers.js';
 const app = express();
 const httpServer = createServer(app);
 
+// Trust proxy - required for rate limiting behind reverse proxy/load balancer
+app.set('trust proxy', 1);
+
 // Allowed origins for CORS
 const allowedOrigins = [
   "http://localhost:5173", // Local development
