@@ -17,7 +17,7 @@ import './PokerRoom.css'
 export default function PokerRoom() {
     const { roomId } = useParams()
     const navigate = useNavigate()
-    const { socket } = useSocket()
+    const { socket, connect } = useSocket()
 
     const [nickname, setNickname] = useState('')
     const [buyinAmount, setBuyinAmount] = useState(1000)
@@ -440,12 +440,12 @@ export default function PokerRoom() {
     useEffect(() => {
         const checkRoomAndReconnect = async () => {
             setCheckingRoom(true)
-            
+
             // First, check if room exists via API
             try {
                 const apiUrl = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001'
                 const response = await fetch(`${apiUrl}/api/rooms/${roomId}`)
-                
+
                 if (!response.ok) {
                     // Room doesn't exist, redirect to home
                     setRoomNotFound(true)
@@ -453,8 +453,11 @@ export default function PokerRoom() {
                     setTimeout(() => navigate('/'), 2000)
                     return
                 }
-                
-                // Room exists, now check if we can auto-reconnect
+
+                // Room exists, connect to socket server
+                connect()
+
+                // Now check if we can auto-reconnect
                 const sessionToken = getSessionToken()
                 const storedNickname = getStoredNickname()
                 
@@ -504,7 +507,7 @@ export default function PokerRoom() {
         }
         
         checkRoomAndReconnect()
-    }, [roomId, socket, navigate])
+    }, [roomId, socket, navigate, connect])
 
     const handleJoinRoom = (e) => {
         e.preventDefault()

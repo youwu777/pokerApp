@@ -15,10 +15,19 @@ export function SocketProvider({ children }) {
     const [socket, setSocket] = useState(null)
     const [connected, setConnected] = useState(false)
 
-    useEffect(() => {
+    const connect = () => {
+        if (socket) {
+            // Socket already exists, just connect if not connected
+            if (!socket.connected) {
+                socket.connect()
+            }
+            return
+        }
+
+        // Create new socket with autoConnect disabled
         const serverUrl = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001'
         const newSocket = io(serverUrl, {
-            autoConnect: true
+            autoConnect: false
         })
 
         newSocket.on('connect', () => {
@@ -33,13 +42,20 @@ export function SocketProvider({ children }) {
 
         setSocket(newSocket)
 
+        // Connect immediately after setup
+        newSocket.connect()
+    }
+
+    useEffect(() => {
         return () => {
-            newSocket.close()
+            if (socket) {
+                socket.close()
+            }
         }
-    }, [])
+    }, [socket])
 
     return (
-        <SocketContext.Provider value={{ socket, connected }}>
+        <SocketContext.Provider value={{ socket, connected, connect }}>
             {children}
         </SocketContext.Provider>
     )

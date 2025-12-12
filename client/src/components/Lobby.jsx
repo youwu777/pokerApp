@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useSocket } from '../context/SocketContext'
 import GameSettings from './GameSettings'
 import './Lobby.css'
 
@@ -7,6 +8,7 @@ export default function Lobby() {
     const [showSettings, setShowSettings] = useState(false)
     const [joinRoomId, setJoinRoomId] = useState('')
     const navigate = useNavigate()
+    const { connect } = useSocket()
 
     const handleCreateGame = async (settings) => {
         try {
@@ -18,6 +20,10 @@ export default function Lobby() {
             })
 
             const data = await response.json()
+
+            // Connect to socket server after room is created
+            connect()
+
             navigate(`/room/${data.roomId}`)
         } catch (error) {
             console.error('Failed to create room:', error)
