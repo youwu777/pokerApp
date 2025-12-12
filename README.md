@@ -7,23 +7,27 @@ A private Texas Hold'em poker home game application built with Node.js and React
 - 🎮 **Private Rooms**: Create and share room links with friends
 - 🃏 **Texas Hold'em**: Full poker game with blinds, betting rounds, and showdowns
 - ⚡ **Real-time**: WebSocket-based gameplay with instant updates
-- 🎯 **Run It Twice**: Deal the board twice when all-in
-- 🐰 **Rabbit Hunt**: See what cards would have come after hand ends
-- ⏱️ **Timer System**: Action timer with time bank support
-- 💬 **In-game Chat**: Communicate with emotes and messages
-- 📱 **Responsive**: Works on desktop, tablet, and mobile
+- 🎯 **Run It Twice**: Deal the board twice when all-in scenarios
+- 🐰 **Rabbit Hunt**: See what cards would have come after hand ends early
+- ⏱️ **Timer System**: Configurable action timer with time bank support
+- 💬 **In-game Chat**: Communicate with friends using emotes and messages
+- 🎨 **Smooth Animations**: Chip movements and visual feedback
+- 📱 **Responsive Design**: Optimized for desktop, tablet, and mobile
+- 🔒 **Rate Limiting**: Built-in protection against abuse
 
 ## Tech Stack
 
 **Backend:**
 - Node.js with Express
-- Socket.io for WebSocket communication
-- pokersolver for hand evaluation
+- Socket.io for real-time WebSocket communication
+- pokersolver for accurate hand evaluation
+- express-rate-limit for API protection
 
 **Frontend:**
-- React with Vite
-- Socket.io-client
-- Vanilla CSS with modern design
+- React 18 with Vite
+- React Router for navigation
+- Socket.io-client for real-time updates
+- Modern CSS with animations
 
 ## Getting Started
 
@@ -71,9 +75,10 @@ npm run dev:client
 ### Usage
 
 1. Open `http://localhost:5173` in your browser
-2. Click "New Game" to create a room with custom settings
-3. Share the room URL with friends
-4. Players join, sit at seats, and start playing!
+2. Click "New Game" to create a room
+3. Configure game settings (blinds, starting stack, timers, etc.)
+4. Share the room URL with friends
+5. Players join, sit at available seats, and start playing!
 
 ## Game Controls
 
@@ -93,11 +98,11 @@ npm run dev:client
 
 - **Blinds**: Small and big blind amounts
 - **Starting Stack**: Chips each player starts with
-- **Action Timer**: Time limit per action (15/30/60 seconds)
-- **Time Bank**: Extra time reserve for tough decisions
-- **Run It Twice**: Enable/disable RIT for all-in situations
-- **Rabbit Hunt**: Allow seeing undealt cards
-- **Hand Limit**: Set session length (unlimited by default)
+- **Action Timer**: Time limit per action (15/30/60 seconds, or off)
+- **Time Bank**: Extra time reserve for critical decisions
+- **Run It Twice**: Enable/disable running it twice for all-in situations
+- **Rabbit Hunt**: Allow players to reveal undealt community cards
+- **Hand Limit**: Set maximum hands per session (unlimited by default)
 
 ## Project Structure
 
@@ -120,38 +125,52 @@ poker_with_m8/
 └── package.json         # Root workspace config
 ```
 
-## Notes
+## Important Notes
 
-- This is a play-money game for entertainment only
+- This is a **play-money game** for entertainment only
 - No real money, rake, or cashier functionality
-- Rooms are stored in memory and will be cleared on server restart
-- For production use, consider adding Redis or database persistence
+- Rooms are stored in memory (cleared on server restart)
+- For production deployment, consider:
+  - Adding Redis or database for room persistence
+  - Implementing user authentication
+  - Setting up SSL/TLS certificates
+  - Configuring environment variables for production URLs
 
 ## Deployment
 
-### Frontend (GitHub Pages)
+### Frontend (GitHub Pages / Static Hosting)
 
-The frontend is configured to deploy automatically to GitHub Pages via GitHub Actions.
+The frontend can be deployed to any static hosting service (GitHub Pages, Netlify, Vercel, etc.)
 
-1. **Enable GitHub Pages** in your repository settings:
-   - Go to Settings → Pages
-   - Source: GitHub Actions
+**For GitHub Pages:**
+1. Enable GitHub Pages in repository settings:
+   - Settings → Pages → Source: GitHub Actions
+2. Set backend URL as environment variable:
+   - Settings → Secrets and variables → Actions
+   - Add `VITE_SERVER_URL` secret with your backend URL
+3. Push to `main` branch to trigger automatic deployment
 
-2. **Set Backend URL** (optional):
-   - If your backend is deployed elsewhere, add a secret:
-     - Go to Settings → Secrets and variables → Actions
-     - Add secret: `VITE_SERVER_URL` with your backend URL
-   - If not set, defaults to `http://localhost:3001`
+**Build for production:**
+```bash
+cd client
+npm run build
+```
 
-3. **Deploy**:
-   - Push to `main` branch to trigger automatic deployment
-   - Or manually trigger via Actions tab → "Deploy to GitHub Pages"
+### Backend (Node.js Hosting)
 
-The site will be available at: `https://youwu777.github.io/pokerApp/`
+Deploy the backend to any Node.js hosting service:
+- **Recommended**: Railway, Render, Fly.io, DigitalOcean
+- **Legacy**: Heroku
 
-### Backend
+**Environment setup:**
+- Set `NODE_ENV=production`
+- Configure CORS to allow your frontend domain
+- Ensure trust proxy is enabled for rate limiting behind reverse proxies
 
-The backend needs to be deployed separately (e.g., Heroku, Railway, Render, etc.) and the frontend URL updated accordingly.
+**Start command:**
+```bash
+npm start --workspace=server
+```
 
 ## License
 
