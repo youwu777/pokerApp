@@ -48,7 +48,7 @@ export default function ChatBubble({ message, playerId, seatNumber, onRemove, up
         }
     }, [updatedAt]) // Only reset timer when updatedAt changes
 
-    if (!message || !seatNumber) return null
+    if (!message || seatNumber == null) return null
 
     return (
         <div 
