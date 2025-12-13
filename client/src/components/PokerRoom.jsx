@@ -716,7 +716,7 @@ export default function PokerRoom() {
                 </div>
             </div>
 
-            <BuyInNotification socket={socket} isHost={isHost} />
+            <BuyInNotification socket={socket} isHost={isHost} roomState={roomState} />
             
             <div className="room-content">
                 {/* Desktop Chat Sidebar */}

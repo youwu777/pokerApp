@@ -1,14 +1,28 @@
 import { useState, useEffect } from 'react'
 import './BuyInNotification.css'
 
-export default function BuyInNotification({ socket, isHost }) {
+export default function BuyInNotification({ socket, isHost, roomState }) {
     const [notifications, setNotifications] = useState([])
+
+    // Initialize notifications from roomState on mount/update
+    useEffect(() => {
+        if (!isHost || !roomState?.pendingBuyIns) return
+
+        // Sync with server state
+        setNotifications(roomState.pendingBuyIns)
+    }, [isHost, roomState?.pendingBuyIns])
 
     useEffect(() => {
         if (!socket || !isHost) return
 
         const handleBuyInRequest = (data) => {
-            setNotifications(prev => [...prev, data])
+            setNotifications(prev => {
+                // Avoid duplicates
+                if (prev.some(n => n.requestId === data.requestId)) {
+                    return prev
+                }
+                return [...prev, data]
+            })
         }
 
         socket.on('buyin-request-notification', handleBuyInRequest)

@@ -137,12 +137,13 @@
 .waiting-approval-banner {
     display: flex;
     align-items: center;
-    gap: var(--space-md);
-    padding: var(--space-md) var(--space-lg);
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
     background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-lg);
+    border-radius: var(--radius-md);
+    box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
     animation: pulse 2s ease-in-out infinite;
+    max-width: fit-content;
 }
 
 @keyframes pulse {
@@ -151,7 +152,7 @@
 }
 
 .waiting-icon {
-    font-size: 2rem;
+    font-size: 1.25rem;
     animation: rotate 2s linear infinite;
 }
 
@@ -165,14 +166,14 @@
 }
 
 .waiting-title {
-    font-weight: 700;
-    font-size: 1rem;
+    font-weight: 600;
+    font-size: 0.85rem;
     color: #1f2937;
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.125rem;
 }
 
 .waiting-subtitle {
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     color: #374151;
     font-weight: 500;
 }
