@@ -699,6 +699,7 @@ export default function PokerRoom() {
                             socket={socket}
                             isHost={isHost}
                             myPlayer={myPlayer}
+                            roomState={roomState}
                         />
                     )}
                     {roomState && (

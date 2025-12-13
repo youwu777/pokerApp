@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import './BuyInRequest.css'
 
-export default function BuyInRequest({ socket, isHost, myPlayer }) {
+export default function BuyInRequest({ socket, isHost, myPlayer, roomState }) {
     const [showModal, setShowModal] = useState(false)
     const [amount, setAmount] = useState('')
     const [pendingRequest, setPendingRequest] = useState(null)
@@ -11,6 +11,11 @@ export default function BuyInRequest({ socket, isHost, myPlayer }) {
     if (!myPlayer) {
         return null
     }
+
+    // Check if player has a pending initial join request
+    const hasPendingInitialJoin = roomState?.pendingBuyIns?.find(
+        req => req.playerId === myPlayer.playerId && req.isInitialJoin
+    )
 
     const handleRequest = (e) => {
         e.preventDefault()
@@ -59,6 +64,19 @@ export default function BuyInRequest({ socket, isHost, myPlayer }) {
             socket.off('buyin-rejected', handleRejected)
         }
     }, [socket])
+
+    // Show waiting message for initial join approval
+    if (hasPendingInitialJoin && myPlayer.stack === 0) {
+        return (
+            <div className="waiting-approval-banner">
+                <div className="waiting-icon">⏳</div>
+                <div className="waiting-text">
+                    <div className="waiting-title">Waiting for Host Approval</div>
+                    <div className="waiting-subtitle">Requested ${hasPendingInitialJoin.amount} to join</div>
+                </div>
+            </div>
+        )
+    }
 
     return (
         <>

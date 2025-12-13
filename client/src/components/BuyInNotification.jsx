@@ -41,7 +41,12 @@ export default function BuyInNotification({ socket, isHost }) {
             {notifications.map(notification => (
                 <div key={notification.requestId} className="buyin-notification">
                     <div className="notification-header">
-                        <h3>Buy-In Request</h3>
+                        <h3>
+                            {notification.isInitialJoin ? 'New Player Request' : 'Buy-In Request'}
+                        </h3>
+                        {notification.isInitialJoin && (
+                            <span className="new-player-badge">NEW</span>
+                        )}
                     </div>
                     <div className="notification-body">
                         <div className="notification-player">

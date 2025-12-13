@@ -185,7 +185,8 @@ export class Room {
             handCount: this.handCount,
             gameState: this.game ? this.game.toJSON() : null,
             scoreboard: roomScoreboard, // Only include scoreboard entries for this room
-            chatHistory: this.chatHistory // Include chat history for reconnection
+            chatHistory: this.chatHistory, // Include chat history for reconnection
+            pendingBuyIns: Array.from(this.pendingBuyIns.values()) // Expose pending buy-in requests
         };
     }
 }

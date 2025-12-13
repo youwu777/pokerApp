@@ -137,11 +137,50 @@ export function setupSocketHandlers(io, socket) {
             }
 
             // New player/session
-            player = new Player(socket.id, nickname, buyin, stableToken);
-            console.log(`[JOIN] Player created with stack: ${player.stack}`);
+            // Determine if this is the host (first player in room)
+            const isHost = room.players.length === 0;
+            const initialStack = isHost ? buyin : 0; // Host gets full stack, non-host gets 0
+
+            player = new Player(socket.id, nickname, initialStack, stableToken);
+            console.log(`[JOIN] Player created with stack: ${player.stack} (isHost: ${isHost})`);
             room.addPlayer(player);
             socket.join(roomId);
             upsertScoreboard(room, player, true);
+
+            // If non-host, auto-create a pending buy-in request for approval
+            if (!isHost && buyin > 0) {
+                const requestId = `${socket.id}-${Date.now()}`;
+                room.pendingBuyIns.set(requestId, {
+                    requestId,
+                    playerId: player.playerId,
+                    nickname: player.nickname,
+                    amount: buyin,
+                    timestamp: Date.now(),
+                    isInitialJoin: true // Flag to distinguish from re-buys
+                });
+
+                console.log(`[JOIN] Auto-created buy-in request for ${nickname}: $${buyin}`);
+
+                // Notify host of pending request
+                const hostSocket = io.sockets.sockets.get(room.hostSocketId);
+                if (hostSocket) {
+                    hostSocket.emit('buyin-request-notification', {
+                        requestId,
+                        playerId: player.playerId,
+                        nickname: player.nickname,
+                        amount: buyin,
+                        isInitialJoin: true
+                    });
+                }
+
+                // Notify player that request is pending
+                socket.emit('buyin-request-sent', {
+                    requestId,
+                    amount: buyin,
+                    status: 'pending',
+                    isInitialJoin: true
+                });
+            }
 
             // Send room state to new player (include sessionToken so client can persist)
             socket.emit('room-joined', {
@@ -156,7 +195,7 @@ export function setupSocketHandlers(io, socket) {
                 player: player.toJSON()
             });
 
-            console.log(`${nickname} joined room ${roomId} with $${buyin}`);
+            console.log(`${nickname} joined room ${roomId} with initial stack $${initialStack} (requested: $${buyin})`);
         } catch (error) {
             socket.emit('error', { message: error.message });
         }
@@ -172,7 +211,7 @@ export function setupSocketHandlers(io, socket) {
 
         // Check if player has stack to sit down
         if (player.stack === 0) {
-            socket.emit('error', { message: 'Cannot sit down with 0 stack. Please request a buy-in first.' });
+            socket.emit('error', { message: 'Cannot sit down with 0 stack. Waiting for host approval...' });
             return;
         }
 
