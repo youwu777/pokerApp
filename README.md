@@ -1,6 +1,8 @@
-# Poker with M8s
+# Honest Poker
 
 A private Texas Hold'em poker home game application built with Node.js and React. Play with friends in real-time with no registration required.
+
+**🎮 Live Site:** [https://honest-poker.win/](https://honest-poker.win/)
 
 ## Features
 
@@ -74,11 +76,17 @@ npm run dev:client
 
 ### Usage
 
+**For local development:**
 1. Open `http://localhost:5173` in your browser
-2. Click "New Game" to create a room
-3. Configure game settings (blinds, starting stack, timers, etc.)
-4. Share the room URL with friends
-5. Players join, sit at available seats, and start playing!
+
+**For production:**
+1. Visit [https://honest-poker.win/](https://honest-poker.win/)
+
+**To play:**
+1. Click "New Game" to create a room
+2. Configure game settings (blinds, starting stack, timers, etc.)
+3. Share the room URL with friends
+4. Players join, sit at available seats, and start playing!
 
 ## Game Controls
 
