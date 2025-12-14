@@ -447,10 +447,9 @@ export default function PokerRoom() {
                 const response = await fetch(`${apiUrl}/api/rooms/${roomId}`)
 
                 if (!response.ok) {
-                    // Room doesn't exist, redirect to home
+                    // Room doesn't exist, show modal until user goes back
                     setRoomNotFound(true)
                     setCheckingRoom(false)
-                    setTimeout(() => navigate('/'), 2000)
                     return
                 }
 
@@ -502,7 +501,6 @@ export default function PokerRoom() {
                 console.error('Error checking room:', error)
                 setRoomNotFound(true)
                 setCheckingRoom(false)
-                setTimeout(() => navigate('/'), 2000)
             }
         }
         
