@@ -13,6 +13,8 @@ function App() {
                     <Route path="/room" element={<Navigate to="/" replace />} />
                     <Route path="/room/" element={<Navigate to="/" replace />} />
                     <Route path="/room/:roomId" element={<PokerRoom />} />
+                    {/* Catch-all: send any unknown path to Lobby */}
+                    <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
             </Router>
         </SocketProvider>
