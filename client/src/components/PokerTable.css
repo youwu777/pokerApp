@@ -232,20 +232,26 @@
 @media (max-width: 768px) {
     .poker-table-wrapper {
         width: 100%;
-        padding: 5px;
-        padding-top: 120px; /* Space for top player seat on mobile */
-        padding-bottom: 100px; /* Space for bottom player seat on mobile */
+        padding: 20px 20px 20px 20px;
         overflow: visible;
         position: relative;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .poker-table {
-        width: 100%;
+        width: calc(100% - 40px);
         max-width: 320px;
-        height: 510px; /* Increased height for mobile */
+        height: 100%;
+        max-height: calc(100vh - 220px); /* Account for header, action panel, and bottom padding */
+        min-height: 550px;
+        aspect-ratio: 2 / 3; /* Make it taller (longer vertically) */
         border-width: 5px;
         border-radius: 240px;
         margin: 0 auto;
+        margin-bottom: 20px;
         position: relative;
     }
     
@@ -282,7 +288,8 @@
         height: 56px;
     }
 
-    /* Mobile Vertical Layout: 1 top, 4 left, 4 right, 1 bottom */
+    /* Mobile Vertical Layout: Clockwise order starting from top */
+    /* Seat 0: Top, Seats 1-4: Right (top to bottom), Seat 5: Bottom, Seats 6-9: Left (bottom to top) */
     /* Optimized spacing for smaller seats */
     
     /* Top - 1 player (seat 0) */
@@ -293,75 +300,75 @@
         bottom: auto;
     }
 
-    /* Left Side - 4 players (seats 1-4) stacked vertically */
+    /* Right Side - 4 players (seats 1-4) stacked top to bottom */
     .seat-1 {
-        top: 7%;
-        left: -48px;
+        top: 17%;
+        right: -48px;
+        left: auto;
         transform: translateY(-50%);
         bottom: auto;
     }
 
     .seat-2 {
-        top: 30%;
-        left: -48px;
+        top: 37%;
+        right: -48px;
+        left: auto;
         transform: translateY(-50%);
         bottom: auto;
     }
 
     .seat-3 {
-        top: 55%;
-        left: -48px;
+        top: 57%;
+        right: -48px;
+        left: auto;
         transform: translateY(-50%);
         bottom: auto;
     }
 
     .seat-4 {
-        top: 70%;
+        top: 77%;
+        right: -48px;
+        left: auto;
+        transform: translateY(-50%);
+        bottom: auto;
+    }
+
+    /* Bottom - 1 player (seat 5) */
+    .seat-5 {
+        bottom: -45px;
+        left: 45%;
+        transform: translateX(-50%);
+        top: auto;
+        right: auto;
+    }
+
+    /* Left Side - 4 players (seats 6-9) stacked bottom to top */
+    .seat-6 {
+        top: 77%;
         left: -48px;
         transform: translateY(-50%);
         bottom: auto;
     }
 
-    /* Right Side - 4 players (seats 5-8) stacked vertically */
-    .seat-5 {
-        top: 7%;
-        right: -48px;
-        left: auto;
-        transform: translateY(-50%);
-        bottom: auto;
-    }
-
-    .seat-6 {
-        top: 30%;
-        right: -48px;
-        left: auto;
-        transform: translateY(-50%);
-        bottom: auto;
-    }
-
     .seat-7 {
-        top: 55%;
-        right: -48px;
-        left: auto;
+        top: 57%;
+        left: -48px;
         transform: translateY(-50%);
         bottom: auto;
     }
 
     .seat-8 {
-        top: 70%;
-        right: -48px;
-        left: auto;
+        top: 37%;
+        left: -48px;
         transform: translateY(-50%);
         bottom: auto;
     }
 
-    /* Bottom - 1 player (seat 9) moved to left side to avoid action panel */
     .seat-9 {
-        bottom: -45px;
-        left: 10%;
-        transform: translateX(-50%);
-        top: auto;
-        right: auto;
+        top: 17%;
+        left: -48px;
+        transform: translateY(-50%);
+        bottom: auto;
     }
 
     /* Mobile bet positioning - adjusted for smaller seats */
@@ -372,24 +379,11 @@
         font-size: 0.65rem;
     }
 
-    /* Keep bet labels close to the seat toward table center */
+    /* Right side seats (1-4) - bet labels on left side toward table center */
     .seat-1 .current-bet,
     .seat-2 .current-bet,
     .seat-3 .current-bet,
     .seat-4 .current-bet {
-        position: absolute;
-        left: auto;
-        right: -28px;
-        top: 50%;
-        bottom: auto;
-        transform: translateY(-50%);
-        font-size: 0.65rem;
-    }
-
-    .seat-5 .current-bet,
-    .seat-6 .current-bet,
-    .seat-7 .current-bet,
-    .seat-8 .current-bet {
         position: absolute;
         right: auto;
         left: -20px;
@@ -399,14 +393,29 @@
         font-size: 0.65rem;
     }
 
-    .seat-9 .current-bet {
+    /* Bottom seat (5) - bet label above */
+    .seat-5 .current-bet {
         position: absolute;
         bottom: auto;
         top: -25px;
-        left: 45%;
+        left: 50%;
         transform: translateX(-50%);
         font-size: 0.65rem;
         min-width: 40px;
         padding: 2px 8px;
+    }
+
+    /* Left side seats (6-9) - bet labels on right side toward table center */
+    .seat-6 .current-bet,
+    .seat-7 .current-bet,
+    .seat-8 .current-bet,
+    .seat-9 .current-bet {
+        position: absolute;
+        left: auto;
+        right: -28px;
+        top: 50%;
+        bottom: auto;
+        transform: translateY(-50%);
+        font-size: 0.65rem;
     }
 }

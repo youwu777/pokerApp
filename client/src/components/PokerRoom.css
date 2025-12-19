@@ -1,8 +1,7 @@
 .poker-room {
     height: 100vh;
     max-height: 100vh;
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow: hidden;
     background-image: 
         linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)),
         url('https://scx2.b-cdn.net/gfx/news/hires/2013/studyshowsmo.jpg');
@@ -179,6 +178,7 @@
     padding-top: calc(var(--space-lg) + 100px); /* Add top padding to account for fixed header */
     overflow: hidden;
     min-height: 0;
+    max-height: 100%;
 }
 
 .action-sidebar {
@@ -228,13 +228,239 @@
     }
 }
 
+/* Mobile Header Toggle Button */
+.mobile-header-toggle {
+    display: none;
+}
+
 @media (max-width: 768px) {
+    .mobile-header-toggle {
+        display: flex;
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: var(--color-primary);
+        color: white;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        font-size: 1.5rem;
+        cursor: pointer;
+        box-shadow: var(--shadow-xl);
+        z-index: 1001;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+
+    .mobile-header-toggle:hover {
+        transform: scale(1.1);
+        background: var(--color-primary-hover);
+    }
+
+    .mobile-chat-btn {
+        display: flex;
+        position: fixed;
+        top: 10px;
+        left: 64px; /* Position next to header toggle (10px + 44px + 10px gap) */
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: var(--color-primary);
+        color: white;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        font-size: 1.5rem;
+        cursor: pointer;
+        box-shadow: var(--shadow-xl);
+        z-index: 1001;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+
+    .mobile-chat-btn:hover {
+        transform: scale(1.1);
+        background: var(--color-primary-hover);
+    }
+
+    .mobile-header-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 999;
+        animation: fadeIn 0.2s ease;
+        pointer-events: auto;
+    }
+
     .room-header {
-        flex-direction: row;
-        justify-content: space-between;
+        position: fixed;
+        top: 60px;
+        left: 10px;
+        width: 260px !important;
+        min-width: 260px !important;
+        max-width: 260px !important;
+        flex-direction: column !important;
+        justify-content: flex-start;
         gap: var(--space-sm);
+        align-items: stretch !important;
+        padding: var(--space-md);
+        background: var(--gradient-surface);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-xl);
+        z-index: 1000;
+        opacity: 0;
+        transform: translateX(-100%) scale(0.9);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow-y: auto;
+        overflow-x: hidden !important;
+        pointer-events: none;
+        max-height: calc(100vh - 70px);
+        min-height: auto;
+        height: auto;
+        box-sizing: border-box !important;
+    }
+
+    .room-header * {
+        box-sizing: border-box !important;
+    }
+
+    /* Ensure room-controls container doesn't restrict height */
+    .room-header .room-controls {
+        flex: 0 0 auto !important;
+        min-height: 0 !important;
+        height: auto !important;
+        max-height: none !important;
+    }
+
+    /* Make sure all content is visible with proper scrolling */
+    .room-header.mobile-header-open {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+        pointer-events: auto;
+        height: auto !important;
+        min-height: auto !important;
+        max-height: calc(100vh - 70px) !important;
+    }
+
+    .room-header > * {
+        pointer-events: auto;
+    }
+
+    .room-info {
+        text-align: left;
+        margin-bottom: var(--space-sm);
+        padding-bottom: var(--space-sm);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        width: 100% !important;
+        flex-shrink: 0;
+    }
+
+    .room-info h3 {
+        font-size: 1rem;
+        margin-bottom: var(--space-xs);
+    }
+
+    .room-stats {
+        font-size: 0.8rem;
+        flex-direction: column;
+        gap: var(--space-xs);
         align-items: flex-start;
-        padding: var(--space-sm) var(--space-md);
+    }
+
+    .room-controls {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: var(--space-xs) !important;
+        align-items: stretch !important;
+        width: 100% !important;
+        flex-wrap: nowrap !important;
+        min-height: auto !important;
+        height: auto !important;
+    }
+
+    .room-controls > * {
+        width: 100% !important;
+        flex-shrink: 0 !important;
+        flex-basis: auto !important;
+        display: block !important;
+    }
+
+    .room-controls .btn,
+    .room-controls .buyin-request-btn,
+    .room-controls .btn-sm {
+        width: 100% !important;
+        min-width: unset !important;
+        max-width: 100% !important;
+        height: 36px !important;
+        font-size: 0.85rem !important;
+        padding: 0 var(--space-sm) !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        display: block !important;
+        margin: 0 !important;
+    }
+
+    /* Force host-controls to stack vertically */
+    .room-controls .host-controls {
+        width: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        flex-wrap: nowrap !important;
+        gap: var(--space-xs) !important;
+        align-items: stretch !important;
+    }
+
+    .room-controls .host-controls > * {
+        width: 100% !important;
+        flex: 0 0 auto !important;
+    }
+
+    .room-controls .host-controls .btn {
+        width: 100% !important;
+        margin: 0 !important;
+        display: block !important;
+    }
+
+    /* ScoreBoard button styling - ensure it's a block element */
+    .room-controls button.btn-ghost {
+        width: 100% !important;
+        display: block !important;
+        margin: 0 !important;
+    }
+
+    /* BuyInRequest button and banner styling */
+    .room-controls .buyin-request-btn {
+        width: 100% !important;
+        display: block !important;
+        margin: 0 !important;
+    }
+
+    .room-controls .waiting-approval-banner {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        display: block !important;
+    }
+
+    /* Ensure all direct children and nested buttons stack vertically */
+    .room-controls button,
+    .room-controls .buyin-request-btn,
+    .room-controls .host-controls button,
+    .room-controls > div button {
+        width: 100% !important;
+        display: block !important;
+        margin: 0 0 var(--space-xs) 0 !important;
+    }
+
+    /* Remove any inline-flex or flex that might cause horizontal layout */
+    .room-controls * {
+        max-width: 100% !important;
     }
 
     .room-info h3 {
@@ -262,13 +488,18 @@
 
     .room-content {
         padding: var(--space-sm);
-        padding-top: calc(var(--space-sm) + 100px); /* Account for fixed header on mobile */
+        padding-top: var(--space-sm);
         padding-bottom: var(--space-sm);
         grid-template-columns: 1fr;
         position: relative;
         min-height: 0;
         flex: 1;
-        overflow-y: auto;
+        overflow: hidden;
+        transition: padding-top 0.3s ease;
+    }
+
+    .room-content.mobile-header-closed {
+        padding-top: var(--space-sm);
     }
 
     /* Hide desktop chat sidebar on mobile */
@@ -328,50 +559,25 @@
         box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
     }
 
-    /* Mobile chat button */
-    .mobile-chat-btn {
-        display: flex;
-        position: fixed;
-        bottom: 80px;
-        right: 20px;
-        width: 56px;
-        height: 56px;
-        border-radius: 50%;
-        background: var(--color-primary);
-        color: white;
-        border: none;
-        font-size: 1.5rem;
-        cursor: pointer;
-        box-shadow: var(--shadow-xl);
-        z-index: 998;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.3s ease;
-    }
-
-    .mobile-chat-btn:hover {
-        transform: scale(1.1);
-        background: var(--color-primary-dark);
-    }
-
     .mobile-chat-btn .chat-badge {
         position: absolute;
-        top: 8px;
-        right: 8px;
-        width: 12px;
-        height: 12px;
+        top: 2px;
+        right: 2px;
+        width: 10px;
+        height: 10px;
         background: #10b981;
         border-radius: 50%;
         border: 2px solid white;
     }
     .table-container {
-        padding: 120px 5px 180px; /* Increased top padding to move table down and provide space for top player seat */
+        padding: 0;
         overflow: visible;
         min-height: 0;
         display: flex;
         align-items: center;
         justify-content: center;
         width: 100%;
+        height: 100%;
     }
 
     .poker-table-wrapper {

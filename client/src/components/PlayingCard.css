@@ -50,7 +50,7 @@
 }
 
 .card-suit {
-    font-size: 0.8rem;
+    font-size: 1rem;
 }
 
 .card-center {
@@ -60,7 +60,7 @@
 }
 
 .card-suit-large {
-    font-size: 2rem;
+    font-size: 2.5rem;
     opacity: 0.3;
 }
 
@@ -76,11 +76,11 @@
     }
 
     .community-cards .card-suit {
-        font-size: 1.5rem;
+        font-size: 1.8rem;
     }
 
     .community-cards .card-suit-large {
-        font-size: 4rem;
+        font-size: 5rem;
     }
 }
 
@@ -113,10 +113,10 @@
     }
 
     .card-suit {
-        font-size: 0.7rem;
+        font-size: 0.9rem;
     }
 
     .card-suit-large {
-        font-size: 1.5rem;
+        font-size: 2rem;
     }
 }

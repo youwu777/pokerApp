@@ -40,6 +40,7 @@ export default function PokerRoom() {
     const [activeAnimations, setActiveAnimations] = useState([])
     const [impactMarks, setImpactMarks] = useState({})
     const [activeChatBubbles, setActiveChatBubbles] = useState([])
+    const [showHeader, setShowHeader] = useState(false) // Mobile header toggle
 
     // Get session token from localStorage
     const getSessionToken = () => {
@@ -671,7 +672,31 @@ export default function PokerRoom() {
                 </div>
             )}
 
-            <div className="room-header">
+            {/* Mobile Header Toggle Button */}
+            <button
+                className="mobile-header-toggle"
+                onClick={() => setShowHeader(!showHeader)}
+                aria-label="Toggle room info"
+            >
+                {showHeader ? '✕' : '☰'}
+            </button>
+
+            {/* Mobile Header Backdrop - only show when header is open */}
+            {showHeader && (
+                <div 
+                    className="mobile-header-backdrop"
+                    onClick={() => setShowHeader(false)}
+                    onTouchStart={(e) => {
+                        // Close on touch outside the widget
+                        if (e.target === e.currentTarget) {
+                            setShowHeader(false);
+                        }
+                    }}
+                />
+            )}
+
+            {/* Header - Desktop always visible, Mobile as popup */}
+            <div className={`room-header ${showHeader ? 'mobile-header-open' : ''}`}>
                 <div className="room-info">
                     <h3>Room: {roomId}</h3>
                     <div className="room-stats">
@@ -686,7 +711,10 @@ export default function PokerRoom() {
                     {myPlayer && myPlayer.seatNumber !== null && (
                         <button
                             className={myPlayer.standUpNextHand ? "btn btn-secondary btn-sm" : "btn btn-outline-danger btn-sm"}
-                            onClick={handleStandUp}
+                            onClick={() => {
+                                handleStandUp();
+                                if (window.innerWidth <= 768) setShowHeader(false);
+                            }}
                             disabled={myPlayer.standUpNextHand && !roomState.gameState}
                         >
                             {myPlayer.standUpNextHand ? "Leave Next Hand" : "Leave Seat"}
@@ -716,7 +744,7 @@ export default function PokerRoom() {
 
             <BuyInNotification socket={socket} isHost={isHost} roomState={roomState} />
             
-            <div className="room-content">
+            <div className={`room-content ${!showHeader ? 'mobile-header-closed' : ''}`}>
                 {/* Desktop Chat Sidebar */}
                 <div className="sidebar chat-sidebar desktop-chat-sidebar">
                     <Chat 
