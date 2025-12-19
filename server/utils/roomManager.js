@@ -1,5 +1,7 @@
 import { Room } from '../models/Room.js';
 
+const ROOM_TIMEOUT_MS = 15 * 60 * 1000; // Delete room after 15 minutes of inactivity
+
 class RoomManager {
     constructor() {
         this.rooms = new Map();
@@ -35,10 +37,21 @@ class RoomManager {
     }
 
     cleanupEmptyRooms() {
+        // Don't delete rooms immediately - let the room timeout handle it
+        // This allows players to reconnect within 15 minutes
         for (const [roomId, room] of this.rooms.entries()) {
-            if (room.players.length === 0) {
-                this.deleteRoom(roomId);
-                console.log(`Deleted empty room: ${roomId}`);
+            // Only delete if room has been empty for 15+ minutes (timeout already set)
+            // The timeout is set in the disconnect handler when all players are removed
+            if (room.players.length === 0 && !room.roomTimeoutId) {
+                // Room is empty but no timeout set - this shouldn't happen, but set one now
+                console.log(`[ROOM] Room ${roomId} is empty, setting 15-minute timeout`);
+                room.roomTimeoutId = setTimeout(() => {
+                    const finalRoom = this.getRoom(roomId);
+                    if (finalRoom && finalRoom.players.length === 0) {
+                        console.log(`[ROOM] Deleting room ${roomId} after 15 minutes of inactivity`);
+                        this.deleteRoom(roomId);
+                    }
+                }, ROOM_TIMEOUT_MS);
             }
         }
     }

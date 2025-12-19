@@ -24,6 +24,7 @@ export class Room {
         this.pendingBuyIns = new Map(); // Track pending buy-in requests (requestId -> {playerId, nickname, amount, timestamp})
         this.approvedBuyIns = new Map(); // Track approved buy-ins to be added at next hand (playerId -> amount)
         this.disconnectTimeouts = new Map(); // sessionToken -> timeout id for retention cleanup
+        this.roomTimeoutId = null; // Timeout id for room deletion after inactivity
     }
 
     addPlayer(player) {
@@ -43,10 +44,6 @@ export class Room {
 
     getPlayerBySession(sessionToken) {
         return this.players.find(p => p.sessionToken === sessionToken);
-    }
-
-    getPlayerById(playerId) {
-        return this.players.find(p => p.playerId === playerId);
     }
 
     getPlayerById(playerId) {

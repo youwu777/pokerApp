@@ -472,7 +472,8 @@ export default function PokerRoom() {
                                 roomId,
                                 nickname: storedNickname,
                                 buyinAmount: 1000, // Default, won't be used if player already exists
-                                sessionToken: sessionToken
+                                sessionToken: sessionToken,
+                                playerId: getStoredPlayerId()
                             })
                             // Don't set checkingRoom to false yet - wait for room-joined event
                         } else {
@@ -484,7 +485,8 @@ export default function PokerRoom() {
                                     roomId,
                                     nickname: storedNickname,
                                     buyinAmount: 1000,
-                                    sessionToken: sessionToken
+                                    sessionToken: sessionToken,
+                                    playerId: getStoredPlayerId()
                                 })
                                 socket.off('connect', onConnect)
                             }
@@ -513,12 +515,14 @@ export default function PokerRoom() {
         if (nickname.trim() && socket) {
             const buyin = parseInt(buyinAmount, 10) || 1000
             const sessionToken = getSessionToken()
-            console.log('Joining room with buyin:', buyin, 'sessionToken:', sessionToken)
+            const playerId = getStoredPlayerId()
+            console.log('Joining room with buyin:', buyin, 'sessionToken:', sessionToken, 'playerId:', playerId)
             socket.emit('join-room', {
                 roomId,
                 nickname: nickname.trim(),
                 buyinAmount: buyin,
-                sessionToken: sessionToken
+                sessionToken: sessionToken,
+                playerId: playerId
             })
         }
     }

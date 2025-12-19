@@ -7,7 +7,8 @@ import { PlayerTimer } from '../utils/Timer.js';
 import { v4 as uuidv4 } from 'uuid';
 
 const activeTimers = new Map(); // roomId -> timer
-const DISCONNECT_RETENTION_MS = 5 * 60 * 1000; // Keep state for 5 minutes
+const DISCONNECT_RETENTION_MS = 5 * 60 * 1000; // Keep player state for 5 minutes
+const ROOM_TIMEOUT_MS = 15 * 60 * 1000; // Delete room after 15 minutes of inactivity
 
 export function setupSocketHandlers(io, socket) {
 
@@ -39,7 +40,7 @@ export function setupSocketHandlers(io, socket) {
     };
 
     // Join room
-    socket.on('join-room', ({ roomId, nickname, buyinAmount, sessionToken }) => {
+    socket.on('join-room', ({ roomId, nickname, buyinAmount, sessionToken, playerId }) => {
         // First, check if socket is already in a different room and leave it
         // This prevents sockets from being in multiple Socket.IO rooms simultaneously
         const previousRoom = roomManager.getRoomBySocketId(socket.id);
@@ -74,10 +75,54 @@ export function setupSocketHandlers(io, socket) {
             const buyin = buyinAmount || 1000;
             console.log(`[JOIN] ${nickname} joining with buyin: ${buyin} (type: ${typeof buyin}), token: ${stableToken}`);
 
-            // Check for existing session
+            // Check for existing session by sessionToken
             let player = room.getPlayerBySession(stableToken);
 
+            // If not found by sessionToken, try to find by playerId (for reconnection)
+            if (!player && playerId) {
+                player = room.getPlayerById(playerId);
+                
+                // If player not in active players but exists in scoreboard, restore them
+                if (!player && room.scoreboard.has(playerId)) {
+                    const scoreboardEntry = room.scoreboard.get(playerId);
+                    console.log(`[RECONNECT] Restoring player ${playerId} from scoreboard for room ${roomId}`);
+                    
+                    // Use existing sessionToken from scoreboard if available, otherwise use new one
+                    const restoredSessionToken = scoreboardEntry.sessionToken || stableToken;
+                    
+                    // Create a new player instance with data from scoreboard
+                    player = new Player(
+                        socket.id,
+                        scoreboardEntry.nickname || nickname,
+                        scoreboardEntry.stack || 0,
+                        restoredSessionToken,
+                        playerId,
+                        scoreboardEntry.avatarImage || null
+                    );
+                    
+                    // Restore player state from scoreboard
+                    player.stack = scoreboardEntry.stack || 0;
+                    player.buyin = scoreboardEntry.buyin || 0;
+                    player.chips = scoreboardEntry.stack || 0; // Sync chips with stack
+                    
+                    // Update sessionToken if it changed (e.g., new browser session)
+                    if (stableToken !== restoredSessionToken) {
+                        player.sessionToken = stableToken;
+                    }
+                    
+                    // Add player back to room
+                    room.addPlayer(player);
+                    console.log(`[RECONNECT] Restored player ${player.nickname} with stack ${player.stack}, playerId: ${player.playerId}`);
+                }
+            }
+
             if (player) {
+                // Cancel room timeout if it exists (player is reconnecting)
+                if (room.roomTimeoutId) {
+                    clearTimeout(room.roomTimeoutId);
+                    room.roomTimeoutId = null;
+                    console.log(`[ROOM] Cancelled room timeout for ${roomId} - player reconnected`);
+                }
                 const previousSocketId = player.socketId;
                 // Enforce single connection per sessionToken: disconnect old socket if different
                 if (player.socketId && player.socketId !== socket.id) {
@@ -124,7 +169,11 @@ export function setupSocketHandlers(io, socket) {
 
                 // Resend private hole cards if game in progress
                 if (room.game) {
-                    const me = room.game.players.find(p => p.sessionToken === stableToken);
+                    const me = room.game.players.find(p => 
+                        p.sessionToken === stableToken || 
+                        p.playerId === playerId ||
+                        p.playerId === player.playerId
+                    );
                     if (me && me.holeCards?.length) {
                         io.to(socket.id).emit('deal-cards', { holeCards: me.holeCards });
                     }
@@ -137,6 +186,13 @@ export function setupSocketHandlers(io, socket) {
             }
 
             // New player/session
+            // Cancel room timeout if it exists (new player joining)
+            if (room.roomTimeoutId) {
+                clearTimeout(room.roomTimeoutId);
+                room.roomTimeoutId = null;
+                console.log(`[ROOM] Cancelled room timeout for ${roomId} - new player joining`);
+            }
+            
             // Determine if this is the host (first player in room)
             const isHost = room.players.length === 0;
             const initialStack = isHost ? buyin : 0; // Host gets full stack, non-host gets 0
@@ -986,13 +1042,27 @@ export function setupSocketHandlers(io, socket) {
                     console.log(`[SESSION] Removing player ${existing.nickname} after retention timeout`);
                     stillRoom.removePlayerBySession(existing.sessionToken);
                     io.to(stillRoom.id).emit('player-left', {
-                        playerId: existing.sessionToken || existing.socketId,
+                        playerId: existing.playerId || existing.sessionToken || existing.socketId,
                         nickname: existing.nickname
                     });
                     io.to(stillRoom.id).emit('room-state', stillRoom.toJSON());
+                    
+                    // Check if all players are now removed (room is empty)
                     if (stillRoom.players.length === 0) {
+                        // All players removed, start room timeout
                         stopPlayerTimer(stillRoom.id);
-                        roomManager.deleteRoom(stillRoom.id);
+                        console.log(`[ROOM] All players removed from room ${stillRoom.id}, starting 15-minute room timeout`);
+                        // Clear any existing room timeout
+                        if (stillRoom.roomTimeoutId) {
+                            clearTimeout(stillRoom.roomTimeoutId);
+                        }
+                        stillRoom.roomTimeoutId = setTimeout(() => {
+                            const finalRoom = roomManager.getRoom(stillRoom.id);
+                            if (finalRoom && finalRoom.players.length === 0) {
+                                console.log(`[ROOM] Deleting room ${finalRoom.id} after 15 minutes of inactivity`);
+                                roomManager.deleteRoom(finalRoom.id);
+                            }
+                        }, ROOM_TIMEOUT_MS);
                     }
                 }
             }, DISCONNECT_RETENTION_MS);
