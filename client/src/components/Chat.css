@@ -141,6 +141,7 @@
     background: var(--gradient-surface);
     border-radius: var(--radius-lg);
     padding: var(--space-md);
+    overflow: hidden;
 }
 
 /* Mobile chat modal styles */
