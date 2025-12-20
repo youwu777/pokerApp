@@ -2,6 +2,7 @@
     height: 100vh;
     max-height: 100vh;
     overflow: hidden;
+    overscroll-behavior: none;
     background-image: 
         linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)),
         url('https://scx2.b-cdn.net/gfx/news/hires/2013/studyshowsmo.jpg');
