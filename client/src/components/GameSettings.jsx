@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import './GameSettings.css'
 
 export default function GameSettings({ onClose, onSubmit }) {
@@ -21,7 +22,7 @@ export default function GameSettings({ onClose, onSubmit }) {
         setSettings(prev => ({ ...prev, [key]: value }))
     }
 
-    return (
+    return createPortal(
         <div className="modal-overlay" onClick={onClose}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                 <div className="modal-header">
@@ -129,6 +130,7 @@ export default function GameSettings({ onClose, onSubmit }) {
                     </div>
                 </form>
             </div>
-        </div>
+        </div>,
+        document.body
     )
 }

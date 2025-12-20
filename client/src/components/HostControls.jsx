@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import GameSettings from './GameSettings'
 import './HostControls.css'
 
-export default function HostControls({ roomState, socket }) {
+export default function HostControls({ roomState, socket, onModalOpen }) {
   const [showSettings, setShowSettings] = useState(false)
   const [isStopping, setIsStopping] = useState(false)
 
@@ -79,7 +79,10 @@ export default function HostControls({ roomState, socket }) {
 
       <button
         className="btn btn-ghost btn-sm"
-        onClick={() => setShowSettings(true)}
+        onClick={() => {
+          setShowSettings(true);
+          if (onModalOpen) onModalOpen();
+        }}
       >
         ⚙️ Settings
       </button>

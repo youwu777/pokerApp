@@ -730,17 +730,26 @@ export default function PokerRoom() {
                             isHost={isHost}
                             myPlayer={myPlayer}
                             roomState={roomState}
+                            onModalOpen={() => {
+                                if (window.innerWidth <= 768) setShowHeader(false);
+                            }}
                         />
                     )}
                     {roomState && (
                         <ScoreBoard 
-                            players={roomState.scoreboard || roomState.players} 
+                            players={roomState.scoreboard || roomState.players}
+                            onModalOpen={() => {
+                                if (window.innerWidth <= 768) setShowHeader(false);
+                            }}
                         />
                     )}
                     {isHost && (
                         <HostControls
                             roomState={roomState}
                             socket={socket}
+                            onModalOpen={() => {
+                                if (window.innerWidth <= 768) setShowHeader(false);
+                            }}
                         />
                     )}
                 </div>

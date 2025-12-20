@@ -1,7 +1,8 @@
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import './ScoreBoard.css'
 
-export default function ScoreBoard({ players }) {
+export default function ScoreBoard({ players, onModalOpen }) {
     const [isExpanded, setIsExpanded] = useState(false)
 
     // Calculate P/L for each player
@@ -32,13 +33,16 @@ export default function ScoreBoard({ players }) {
         <>
             <button
                 className="btn btn-ghost btn-sm"
-                onClick={() => setIsExpanded(true)}
+                onClick={() => {
+                    setIsExpanded(true);
+                    if (onModalOpen) onModalOpen();
+                }}
             >
                 Score
             </button>
 
-            {isExpanded && (
-                <div className="modal-overlay" onClick={() => setIsExpanded(false)}>
+            {isExpanded && createPortal(
+                <div className="modal-overlay scoreboard-modal-overlay" onClick={() => setIsExpanded(false)}>
                     <div className="scoreboard-modal" onClick={(e) => e.stopPropagation()}>
                         <div className="scoreboard-header">
                             <h4>Scoreboard</h4>
@@ -79,7 +83,8 @@ export default function ScoreBoard({ players }) {
                             ))}
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </>
     )

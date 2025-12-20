@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import './BuyInRequest.css'
 
-export default function BuyInRequest({ socket, isHost, myPlayer, roomState }) {
+export default function BuyInRequest({ socket, isHost, myPlayer, roomState, onModalOpen }) {
     const [showModal, setShowModal] = useState(false)
     const [amount, setAmount] = useState('')
     const [pendingRequest, setPendingRequest] = useState(null)
@@ -82,13 +83,16 @@ export default function BuyInRequest({ socket, isHost, myPlayer, roomState }) {
         <>
             <button
                 className="buyin-request-btn"
-                onClick={() => setShowModal(true)}
+                onClick={() => {
+                    setShowModal(true);
+                    if (onModalOpen) onModalOpen();
+                }}
                 disabled={pendingRequest !== null}
             >
                 {pendingRequest ? `Buy-in Pending: $${pendingRequest.amount}` : 'Buy In'}
             </button>
 
-            {showModal && (
+            {showModal && createPortal(
                 <div className="modal-overlay" onClick={() => setShowModal(false)}>
                     <div className="modal-content buyin-modal" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header">
@@ -125,7 +129,8 @@ export default function BuyInRequest({ socket, isHost, myPlayer, roomState }) {
                             </div>
                         </form>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </>
     )

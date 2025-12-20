@@ -9,7 +9,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
+    z-index: 1002 !important; /* Above header popup (z-index 1000) */
     padding: var(--space-lg);
     animation: fadeIn 0.2s ease;
 }
@@ -141,5 +141,7 @@
 
     .modal-content {
         max-height: 95vh;
+        width: 90vw;
+        max-width: 90vw;
     }
 }
