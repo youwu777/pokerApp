@@ -1,4 +1,6 @@
-import { useState, useRef, useMemo } from 'react'
+import { useState, useRef, useMemo, useEffect } from 'react'
+import { createPortal } from 'react-dom'
+import { useSocket } from '../context/SocketContext'
 import PlayingCard from './PlayingCard'
 import './PlayerSeat.css'
 
@@ -10,9 +12,37 @@ const availableImages = Object.values(imageModules).map(module => module.default
 // Fallback image (the original cat image from public folder)
 const fallbackImage = '/image.png'
 
+// Get saved avatar index from localStorage
+function getSavedAvatarIndex(playerId) {
+    if (!playerId) return null
+    try {
+        const saved = localStorage.getItem(`avatar_${playerId}`)
+        return saved ? parseInt(saved, 10) : null
+    } catch (e) {
+        console.error('Failed to get saved avatar:', e)
+        return null
+    }
+}
+
+// Save avatar index to localStorage
+function saveAvatarIndex(playerId, index) {
+    if (!playerId) return
+    try {
+        localStorage.setItem(`avatar_${playerId}`, index.toString())
+    } catch (e) {
+        console.error('Failed to save avatar:', e)
+    }
+}
+
 // Function to get a consistent image for a player based on their ID
 function getPlayerImage(playerId) {
     if (!playerId || availableImages.length === 0) return fallbackImage
+
+    // Check if there's a saved avatar for this player
+    const savedIndex = getSavedAvatarIndex(playerId)
+    if (savedIndex !== null && savedIndex >= 0 && savedIndex < availableImages.length) {
+        return availableImages[savedIndex] || fallbackImage
+    }
 
     // Simple hash function to convert playerId to a number
     let hash = 0
@@ -46,9 +76,12 @@ export default function PlayerSeat({
     isHost,
     impactMarks = []
 }) {
-    const [showThrowMenu, setShowThrowMenu] = useState(false)
+   const [showThrowMenu, setShowThrowMenu] = useState(false)
     const [menuPosition, setMenuPosition] = useState(null)
+    const [showAvatarSelector, setShowAvatarSelector] = useState(false)
+    const [avatarRefreshTrigger, setAvatarRefreshTrigger] = useState(0)
     const seatRef = useRef(null)
+    const { socket } = useSocket()
     
     // Get player's background image based on their ID (consistent for same player)
     // Must be called before any early returns (React Hook rules)
@@ -64,7 +97,30 @@ export default function PlayerSeat({
         }
         const playerId = player?.playerId || player?.socketId
         return getPlayerImage(playerId)
-    }, [player?.playerId, player?.socketId, player?.nickname])
+    }, [player?.playerId, player?.socketId, player?.nickname, avatarRefreshTrigger])
+    
+    // Listen for avatar changes from other players
+    useEffect(() => {
+        if (!socket) return
+        
+        const handleAvatarChanged = ({ playerId, socketId, avatarIndex }) => {
+            // If this player's avatar changed, trigger a refresh
+            if ((playerId === player?.playerId) || (socketId === player?.socketId)) {
+                // Save the avatar index to localStorage for this player
+                const targetPlayerId = playerId || socketId
+                if (targetPlayerId) {
+                    saveAvatarIndex(targetPlayerId, avatarIndex)
+                }
+                setAvatarRefreshTrigger(prev => prev + 1)
+            }
+        }
+        
+        socket.on('avatar-changed', handleAvatarChanged)
+        
+        return () => {
+            socket.off('avatar-changed', handleAvatarChanged)
+        }
+    }, [socket, player?.playerId, player?.socketId])
     
     if (!player) {
         if (isViewerSeated) {
@@ -168,6 +224,30 @@ export default function PlayerSeat({
         timerPercent = actionPercent + timebankPercent; // Total for countdown display
     }
 
+    // Handle avatar selection
+    const handleAvatarSelect = (imageIndex) => {
+        const playerId = player?.playerId || player?.socketId
+        if (!playerId) return
+        
+        // Save the selected avatar index to localStorage
+        saveAvatarIndex(playerId, imageIndex)
+        
+        // Close the selector
+        setShowAvatarSelector(false)
+        
+        // Emit socket event to notify other players about the avatar change
+        if (socket) {
+            socket.emit('avatar-changed', { 
+                playerId, 
+                socketId: player?.socketId, 
+                avatarIndex: imageIndex 
+            })
+        }
+        
+        // Force re-render to update the avatar
+        setAvatarRefreshTrigger(prev => prev + 1)
+    }
+
     const openThrowMenu = (e) => {
         console.log('Seat clicked:', {
             isMe,
@@ -180,9 +260,10 @@ export default function PlayerSeat({
             myPlayerId: myPlayer?.playerId
         })
         
+        
         // Only show throw menu if clicking on another player and we have myPlayer
-        if (isMe || !myPlayer || !player) {
-            console.log('Menu blocked - early return', { isMe, hasMyPlayer: !!myPlayer, hasPlayer: !!player, mySeat: myPlayer?.seatNumber })
+        if (!myPlayer || !player) {
+            console.log('Menu blocked - early return', { hasMyPlayer: !!myPlayer, hasPlayer: !!player, mySeat: myPlayer?.seatNumber })
             return
         }
         
@@ -250,11 +331,9 @@ export default function PlayerSeat({
         <div 
             ref={seatRef}
             className={`player-seat cat-seat ${isMe ? 'my-seat' : ''} ${isCurrentPlayer ? 'active-turn' : ''} ${isFolded ? 'folded' : ''} ${isWaiting ? 'waiting' : ''} ${isWinner ? 'winner' : ''} ${impactClass}`}
-            onClick={openThrowMenu}
             data-player-id={player?.playerId || player?.socketId}
             data-socket-id={player?.socketId}
             style={{ 
-                cursor: myPlayer && myPlayer.seatNumber !== null && !isMe ? 'pointer' : 'default',
                 backgroundImage: 'none'
             }}
         >
@@ -368,6 +447,21 @@ export default function PlayerSeat({
                 </button>
             )}
 
+            {/* Change Avatar Button (only for me) */}
+            {isMe && (
+                <button
+                    className="btn-change-avatar"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        setShowAvatarSelector(true);
+                    }}
+                    title="Change Avatar"
+                >
+                    📸
+                </button>
+            )}
+
             {/* Kick button (only for host viewing other players) */}
             {isHost && !isMe && player && onKickPlayer && (
                 <button
@@ -451,6 +545,46 @@ export default function PlayerSeat({
                         ))}
                     </div>
                 </div>
+            )}
+
+            {/* Avatar Selector */}
+            {showAvatarSelector && isMe && createPortal(
+                <div 
+                    className="avatar-selector-backdrop"
+                    onClick={() => setShowAvatarSelector(false)}
+                >
+                    <div 
+                        className="avatar-selector"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="avatar-selector-title">Choose your avatar</div>
+                        <div className="avatar-grid">
+                            {availableImages.map((image, index) => (
+                                <div 
+                                    key={index} 
+                                    className={`avatar-option ${playerImage === image ? 'selected' : ''}`}
+                                    onClick={() => {
+                                        handleAvatarSelect(index)
+                                    }}
+                                >
+                                    <img src={image} alt={`Avatar ${index + 1}`} />
+                                </div>
+                            ))}
+                        </div>
+                        <button 
+                            className="avatar-selector-close"
+                            onClick={(e) => {
+                                console.log('Close button clicked');
+                                e.stopPropagation();
+                                e.preventDefault();
+                                setShowAvatarSelector(false);
+                            }}
+                        >
+                            Close
+                        </button>
+                    </div>
+                </div>,
+                document.body
             )}
 
         </div>

@@ -42,7 +42,7 @@
     width: 90%;
     height: 90%;
     object-fit: contain;
-    pointer-events: none;
+    cursor: pointer;
     z-index: 0;
 }
 
@@ -565,6 +565,38 @@
     color: black;
 }
 
+.btn-change-avatar {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #3b82f6;
+    color: white;
+    border: 2px solid #1f2937;
+    font-size: 12px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    z-index: 30;
+    transition: all 0.2s;
+    opacity: 0;
+    /* Hidden by default */
+}
+
+.player-seat:hover .btn-change-avatar {
+    opacity: 1;
+}
+
+.btn-change-avatar:hover {
+    transform: scale(1.1);
+    background: #2563eb;
+}
+
 .btn-kick-player {
     position: absolute;
     top: -8px;
@@ -714,5 +746,126 @@
     50% {
         box-shadow: 0 0 30px rgba(59, 130, 246, 0.9), 0 0 60px rgba(59, 130, 246, 0.5);
         border-color: rgba(96, 165, 250, 1);
+    }
+}
+
+/* Avatar Selector Styles */
+
+.avatar-selector-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.avatar-selector {
+    position: relative;
+    background: #1f2937;
+    border: 2px solid #374151;
+    border-radius: 12px;
+    padding: 12px;
+    max-width: 40vw;
+    max-height: 70vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+}
+
+.avatar-selector-title {
+    font-size: 1rem;
+    font-weight: bold;
+    color: white;
+    text-align: center;
+    margin-bottom: 12px;
+}
+
+.avatar-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.avatar-option {
+    border: 2px solid transparent;
+    border-radius: 8px;
+    padding: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: rgba(255, 255, 255, 0.1);
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.avatar-option:hover {
+    border-color: #3b82f6;
+    transform: scale(1.05);
+}
+
+.avatar-option.selected {
+    border-color: #10b981;
+    background: rgba(16, 185, 129, 0.2);
+}
+
+.avatar-option img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 6px;
+}
+
+.avatar-selector-close {
+    display: block;
+    margin: 0 auto;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.avatar-selector-close:hover {
+    background: #2563eb;
+}
+
+/* Responsive Avatar Selector */
+@media (max-width: 768px) {
+    .avatar-selector {
+        max-width: 95vw;
+        max-height: 80vh;
+        padding: 12px;
+    }
+
+    .avatar-grid {
+        grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+        gap: 8px;
+    }
+
+    .avatar-selector-title {
+        font-size: 1.1rem;
+        margin-bottom: 12px;
+    }
+
+    .avatar-option {
+        padding: 5px;
+    }
+
+    .avatar-selector-close {
+        padding: 7px 14px;
+        font-size: 0.85rem;
     }
 }

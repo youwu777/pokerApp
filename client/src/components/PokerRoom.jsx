@@ -532,8 +532,12 @@ export default function PokerRoom() {
     }
 
     const handleSitDown = (seatNumber) => {
-        if (socket) {
-            socket.emit('sit-down', { seatNumber })
+        try {
+            if (socket && seatNumber !== undefined && seatNumber !== null) {
+                socket.emit('sit-down', { seatNumber })
+            }
+        } catch (error) {
+            console.error('Error in handleSitDown:', error)
         }
     }
 

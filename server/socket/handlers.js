@@ -741,6 +741,19 @@ export function setupSocketHandlers(io, socket) {
         }
     });
 
+    // Handle avatar change event
+    socket.on('avatar-changed', ({ playerId, socketId, avatarIndex }) => {
+        const room = roomManager.getRoomBySocketId(socket.id);
+        if (!room) return;
+        
+        // Broadcast the avatar change to all players in the room
+        io.to(room.id).emit('avatar-changed', {
+            playerId,
+            socketId,
+            avatarIndex
+        });
+    });
+    
     // Run It Twice response
     socket.on('rit-response', ({ agree }) => {
         const room = roomManager.getRoomBySocketId(socket.id);
