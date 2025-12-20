@@ -324,6 +324,56 @@ export function setupSocketHandlers(io, socket) {
         io.to(room.id).emit('room-state', room.toJSON());
     });
 
+    // Host transfers ownership to another player
+    socket.on('transfer-host', ({ newHostPlayerId }) => {
+        const room = roomManager.getRoomBySocketId(socket.id);
+        if (!room) return;
+
+        // Only current host can transfer ownership
+        if (!room.isHost(socket.id)) {
+            socket.emit('error', { message: 'Only room owner can transfer ownership' });
+            return;
+        }
+
+        // Validate that the new host player exists in the room
+        const newHostPlayer = room.getPlayerById(newHostPlayerId);
+        if (!newHostPlayer) {
+            socket.emit('error', { message: 'Selected player not found in room' });
+            return;
+        }
+
+        // Transfer host ownership
+        const transferSuccess = room.transferHost(newHostPlayerId);
+        if (!transferSuccess) {
+            socket.emit('error', { message: 'Failed to transfer host ownership' });
+            return;
+        }
+
+        // Update scoreboard entries if needed
+        upsertScoreboard(room, newHostPlayer, true);
+
+        // Get old host player for notification
+        const oldHostPlayer = room.players.find(p => p.socketId === socket.id);
+        if (oldHostPlayer) {
+            upsertScoreboard(room, oldHostPlayer, true);
+        }
+
+        // Broadcast updated room state to all players
+        io.to(room.id).emit('room-state', room.toJSON());
+
+        // Notify the new host
+        io.to(newHostPlayer.socketId).emit('notification', {
+            message: 'You have been granted room ownership!' 
+        });
+
+        // Notify the old host
+        socket.emit('notification', {
+            message: `Room ownership transferred to ${newHostPlayer.nickname}` 
+        });
+
+        console.log(`[HOST TRANSFER] ${oldHostPlayer?.nickname || 'Host'} transferred ownership to ${newHostPlayer.nickname} in room ${room.id}`);
+    });
+
     // Host kicks a player from their seat
     socket.on('kick-player', (targetSocketId) => {
         const room = roomManager.getRoomBySocketId(socket.id);

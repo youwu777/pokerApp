@@ -108,6 +108,24 @@ export class Room {
         return this.hostSocketId === socketId;
     }
 
+    /**
+     * Transfer host privileges to a new player
+     * @param {string} newHostPlayerId - The playerId of the new host
+     * @returns {boolean} - True if host transfer was successful, false if player not found
+     */
+    transferHost(newHostPlayerId) {
+        const newHost = this.players.find(p => p.playerId === newHostPlayerId);
+        if (!newHost) {
+            return false;
+        }
+
+        // Update host information
+        this.hostSocketId = newHost.socketId;
+        this.hostSessionToken = newHost.sessionToken || null;
+        this.hostPlayerId = newHost.playerId;
+        return true;
+    }
+
     updateSettings(newSettings) {
         this.settings = { ...this.settings, ...newSettings };
     }

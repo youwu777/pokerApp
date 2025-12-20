@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import GameSettings from './GameSettings'
+import HostTransfer from './HostTransfer'
 import './HostControls.css'
 
 export default function HostControls({ roomState, socket, onModalOpen }) {
   const [showSettings, setShowSettings] = useState(false)
   const [isStopping, setIsStopping] = useState(false)
+  const [showHostTransfer, setShowHostTransfer] = useState(false)
 
   // Listen for game stop events to reset the stopping state
   useEffect(() => {
@@ -87,10 +89,28 @@ export default function HostControls({ roomState, socket, onModalOpen }) {
         ⚙️ Settings
       </button>
 
+      <button
+        className="btn btn-ghost btn-sm"
+        onClick={() => {
+          setShowHostTransfer(true);
+          if (onModalOpen) onModalOpen();
+        }}
+      >
+        🔄 Change Host
+      </button>
+
       {showSettings && (
         <GameSettings
           onClose={() => setShowSettings(false)}
           onSubmit={handleUpdateSettings}
+        />
+      )}
+
+      {showHostTransfer && (
+        <HostTransfer
+          socket={socket}
+          roomState={roomState}
+          onClose={() => setShowHostTransfer(false)}
         />
       )}
     </div>

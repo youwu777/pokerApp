@@ -146,6 +146,10 @@ export default function PokerRoom() {
 
         socket.on('room-state', (state) => {
             setRoomState(state)
+            // Update host status based on current socket ID
+            if (state?.hostSocketId) {
+                setIsHost(socket.id === state.hostSocketId)
+            }
             // Update visible community cards if game state exists
             if (state?.gameState?.communityCards) {
                 setVisibleCommunityCards(state.gameState.communityCards)

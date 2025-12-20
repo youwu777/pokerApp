@@ -1,0 +1,89 @@
+/* Host Transfer Modal Styles */
+.host-transfer-modal {
+    width: 90%;
+    max-width: 400px;
+    background: var(--bg-dark);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-lg);
+    color: var(--text-primary);
+}
+
+.host-transfer-modal .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-md) var(--space-lg);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.host-transfer-modal .modal-body {
+    padding: var(--space-lg);
+}
+
+.host-transfer-modal h3 {
+    margin-top: 0;
+    margin-bottom: var(--space-md);
+    font-size: 1.1rem;
+    color: var(--text-primary);
+}
+
+/* Player List */
+.player-list {
+    margin-top: var(--space-sm);
+}
+
+.player-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.player-btn {
+    text-align: left;
+    padding: var(--space-md);
+    font-size: 1rem;
+    transition: all 0.2s ease;
+}
+
+.player-btn:hover {
+    background-color: var(--primary-hover);
+    transform: translateY(-1px);
+}
+
+.no-players {
+    color: var(--text-muted);
+    font-style: italic;
+    text-align: center;
+    padding: var(--space-lg);
+}
+
+/* Confirm Section */
+.confirm-section {
+    text-align: center;
+}
+
+.confirm-section p {
+    margin-bottom: var(--space-md);
+    line-height: 1.6;
+}
+
+.confirm-actions {
+    display: flex;
+    gap: var(--space-md);
+    justify-content: center;
+    margin-top: var(--space-lg);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .host-transfer-modal {
+        width: 95%;
+        margin: var(--space-md);
+    }
+    
+    .player-buttons {
+        max-height: 250px;
+    }
+}
