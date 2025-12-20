@@ -819,11 +819,16 @@ export function setupSocketHandlers(io, socket) {
         // Remove from pending
         room.pendingBuyIns.delete(requestId);
         
-        // If player is not seated, update stack immediately
-        if (player.seatNumber === null) {
-            console.log(`[BUYIN] Owner approved ${request.nickname}'s buy-in of $${request.amount} (not seated - updating immediately)`);
+        // If no active game OR player is not seated, update stack immediately
+        if (!room.game || player.seatNumber === null) {
+            console.log(`[BUYIN] Owner approved ${request.nickname}'s buy-in of $${request.amount} (${!room.game ? 'no active game' : 'not seated'} - updating immediately)`);
             player.stack += request.amount;
             player.buyin += request.amount;
+            
+            // If player is seated, also update their chips since game hasn't started
+            if (player.seatNumber !== null) {
+                player.chips += request.amount;
+            }
             
             // Update scoreboard
             upsertScoreboard(room, player, true);
@@ -831,10 +836,10 @@ export function setupSocketHandlers(io, socket) {
             // Notify all players of updated room state
             io.to(room.id).emit('room-state', room.toJSON());
         } else {
-            // Player is seated, add to approved buy-ins (to be processed at next hand)
+            // Player is seated and game is active, add to approved buy-ins (to be processed at next hand)
             const existingApproved = room.approvedBuyIns.get(request.playerId) || 0;
             room.approvedBuyIns.set(request.playerId, existingApproved + request.amount);
-            console.log(`[BUYIN] Owner approved ${request.nickname}'s buy-in of $${request.amount} (seated - will process at next hand)`);
+            console.log(`[BUYIN] Owner approved ${request.nickname}'s buy-in of $${request.amount} (seated, active game - will process at next hand)`);
         }
 
         // Notify player - use player's socketId, not playerId

@@ -215,9 +215,21 @@
     border-top: none;
 }
 
-/* Hide pot multiplier buttons on mobile */
+
+
+/* Show preset buttons on mobile with responsive layout */
 .mobile-action-panel .preset-buttons {
-    display: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+    gap: var(--space-xs);
+    margin-top: var(--space-xs);
+}
+
+.mobile-action-panel .preset-buttons .btn {
+    font-size: 0.65rem;
+    padding: 2px 4px;
+    min-height: 28px;
+    font-weight: 500;
 }
 
 /* Hide the range slider on mobile, keep manual input */

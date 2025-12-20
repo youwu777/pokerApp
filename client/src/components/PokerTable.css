@@ -337,7 +337,7 @@
     /* Bottom - 1 player (seat 5) */
     .seat-5 {
         bottom: -45px;
-        left: 45%;
+        left: 30%;
         transform: translateX(-50%);
         top: auto;
         right: auto;
