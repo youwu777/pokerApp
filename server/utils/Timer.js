@@ -1,5 +1,14 @@
 export class Timer {
     constructor(duration, onTick, onExpire) {
+        if (typeof duration !== 'number' || duration <= 0) {
+            throw new Error('Timer duration must be a number greater than 0');
+        }
+        if (onTick !== undefined && typeof onTick !== 'function') {
+            throw new Error('onTick must be a function');
+        }
+        if (onExpire !== undefined && typeof onExpire !== 'function') {
+            throw new Error('onExpire must be a function');
+        }
         this.duration = duration; // seconds
         this.remaining = duration;
         this.onTick = onTick; // callback(remaining)

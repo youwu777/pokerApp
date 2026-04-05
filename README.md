@@ -133,6 +133,23 @@ poker_with_m8/
 └── package.json         # Root workspace config
 ```
 
+## Timer System
+
+The action timer in Honest Poker provides customizable time controls for each player action:
+
+**Timer Features:**
+- Configurable action time (15/30/60 seconds, or disabled)
+- Time Bank: Additional reserve time for critical decisions
+- Auto-fold: Players automatically fold when time expires
+- Visual countdown: On-screen timer shows remaining seconds
+- Per-seat tracking: Each player's time is tracked individually
+
+**How it works:**
+- When it's a player's turn to act, the timer starts
+- If they act before time expires, the timer resets for the next player
+- Time bank can be used to pause the clock and extend their decision time
+- Server enforces timeouts and automatically handles expired actions
+
 ## Important Notes
 
 - This is a **play-money game** for entertainment only
