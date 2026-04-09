@@ -21,14 +21,7 @@ const allowedOrigins = [
   process.env.ALLOWED_ORIGIN // Allow custom origin via environment variable
 ].filter(Boolean); // Remove undefined values
 
-const io = new Server(httpServer, {
-  cors: {
-    origin: allowedOrigins,
-    methods: ["GET", "POST"],
-    credentials: true
-  }
-});
-
+// CORS configuration - only Express middleware
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (like mobile apps or curl requests)
@@ -42,6 +35,19 @@ app.use(cors({
   },
   credentials: true
 }));
+
+// Request logging middleware
+app.use((req, res, next) => {
+  const start = Date.now();
+  
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    console.log(`${req.method} ${req.path} ${res.statusCode} - ${duration}ms`);
+  });
+  
+  next();
+});
+
 app.use(express.json());
 
 // Rate limiters
@@ -89,6 +95,8 @@ app.get('/api/rooms/:roomId', apiLimiter, (req, res) => {
 });
 
 // Socket.io connection handling
+const io = new Server(httpServer);
+
 io.on('connection', (socket) => {
   console.log(`Client connected: ${socket.id}`);
   
@@ -97,6 +105,17 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     console.log(`Client disconnected: ${socket.id}`);
   });
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error(`Error: ${err.message}`);
+  
+  if (err.message === 'Not allowed by CORS') {
+    return res.status(403).json({ error: 'CORS policy violation' });
+  }
+  
+  res.status(500).json({ error: 'Internal server error' });
 });
 
 const PORT = process.env.PORT || 3001;
