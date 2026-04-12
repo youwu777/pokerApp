@@ -3,11 +3,10 @@ import GameSettings from './GameSettings'
 import HostTransfer from './HostTransfer'
 import './HostControls.css'
 
-export default function HostControls({ roomState, socket, onModalOpen, onDissolveRoom, isDissolving, isHost }) {
+export default function HostControls({ roomState, socket, onModalOpen }) {
   const [showSettings, setShowSettings] = useState(false)
   const [isStopping, setIsStopping] = useState(false)
   const [showHostTransfer, setShowHostTransfer] = useState(false)
-  const [showDissolveConfirm, setShowDissolveConfirm] = useState(false)
 
   // Listen for game stop events to reset the stopping state
   useEffect(() => {
@@ -80,19 +79,6 @@ export default function HostControls({ roomState, socket, onModalOpen, onDissolv
         </button>
       )}
 
-      {isHost && !roomState?.gameState && (
-        <button
-          className="btn btn-danger btn-sm"
-          onClick={() => {
-            setShowDissolveConfirm(true)
-            if (onModalOpen) onModalOpen()
-          }}
-          disabled={isDissolving}
-        >
-          🧨 Dissolve Room
-        </button>
-      )}
-
       <button
         className="btn btn-ghost btn-sm"
         onClick={() => {
@@ -126,38 +112,6 @@ export default function HostControls({ roomState, socket, onModalOpen, onDissolv
           roomState={roomState}
           onClose={() => setShowHostTransfer(false)}
         />
-      )}
-
-      {showDissolveConfirm && (
-        <div className="modal-overlay" onClick={() => setShowDissolveConfirm(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Dissolve Room</h2>
-              <button className="modal-close" onClick={() => setShowDissolveConfirm(false)}>×</button>
-            </div>
-            <div style={{ padding: 'var(--space-xl)', textAlign: 'center' }}>
-              <p style={{ fontSize: '1.05rem', marginBottom: 'var(--space-lg)', color: 'var(--color-text)' }}>
-                This will dissolve the room for everyone. Continue?
-              </p>
-              <div className="modal-actions" style={{ justifyContent: 'center' }}>
-                <button
-                  className="btn btn-ghost"
-                  onClick={() => setShowDissolveConfirm(false)}
-                  disabled={isDissolving}
-                >
-                  Cancel
-                </button>
-                <button
-                  className="btn btn-danger"
-                  onClick={() => onDissolveRoom && onDissolveRoom()}
-                  disabled={isDissolving}
-                >
-                  Confirm Dissolve
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   )

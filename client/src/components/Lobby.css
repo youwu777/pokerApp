@@ -14,9 +14,6 @@
     padding: var(--space-lg);
     position: relative;
     overflow: hidden;
-    user-select: none;
-    -webkit-user-select: none;
-    -ms-user-select: none;
 }
 
 .lobby::before {
@@ -134,9 +131,6 @@
     width: 100%;
     font-size: 1rem;
     padding: var(--space-md);
-    user-select: text;
-    -webkit-user-select: text;
-    -ms-user-select: text;
 }
 
 .lobby-features {
@@ -166,79 +160,6 @@
 
 .feature-icon {
     font-size: 1.2rem;
-}
-
-.feature-text {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-xs);
-    position: relative;
-}
-
-.feature-info {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.2rem;
-    height: 1.2rem;
-    border-radius: var(--radius-full);
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    background: rgba(255, 255, 255, 0.08);
-    color: var(--color-text);
-    font-size: 0.7rem;
-    font-weight: 700;
-    cursor: help;
-    transition: all var(--transition-base);
-    position: relative;
-    outline: none;
-}
-
-.feature-info:hover {
-    background: rgba(255, 215, 0, 0.18);
-    color: var(--color-gold);
-    border-color: rgba(255, 215, 0, 0.5);
-}
-
-.feature-info::after, 
-.feature-info::before {
-    position: absolute;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity var(--transition-base), transform var(--transition-base);
-}
-
-.feature-info::after {
-    content: attr(data-tooltip);
-    bottom: 150%;
-    left: 50%;
-    transform: translate(-50%, 10%);
-    background: rgba(0, 0, 0, 0.85);
-    color: white;
-    padding: var(--space-sm) var(--space-md);
-    border-radius: var(--radius-sm);
-    white-space: nowrap;
-    font-size: 0.8rem;
-    box-shadow: var(--shadow-md);
-    z-index: 10;
-}
-
-.feature-info::before {
-    content: '';
-    bottom: 125%;
-    left: 50%;
-    transform: translate(-50%, 10%);
-    border-width: 6px;
-    border-style: solid;
-    border-color: rgba(0, 0, 0, 0.85) transparent transparent transparent;
-    z-index: 10;
-}
-
-.feature-info:hover::after,
-.feature-info:hover::before,
-.feature-info:focus-visible::after,
-.feature-info:focus-visible::before {
-    opacity: 1;
-    transform: translate(-50%, 0);
 }
 
 @media (max-width: 768px) {
