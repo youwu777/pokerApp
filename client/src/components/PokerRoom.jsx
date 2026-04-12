@@ -41,6 +41,8 @@ export default function PokerRoom() {
     const [impactMarks, setImpactMarks] = useState({})
     const [activeChatBubbles, setActiveChatBubbles] = useState([])
     const [showHeader, setShowHeader] = useState(false) // Mobile header toggle
+    const [isDissolving, setIsDissolving] = useState(false)
+    const [showDissolvedModal, setShowDissolvedModal] = useState(false)
 
     // Get session token from localStorage
     const getSessionToken = () => {
@@ -378,6 +380,10 @@ export default function PokerRoom() {
             setRoomState(newRoomState)
         })
 
+        socket.on('room-dissolved', () => {
+            setShowDissolvedModal(true)
+        })
+
         socket.on('error', ({ message }) => {
             if (message === 'Room not found') {
                 setRoomNotFound(true)
@@ -419,6 +425,7 @@ export default function PokerRoom() {
             socket.off('game-stopped')
             socket.off('game-ended')
             socket.off('game-stopping')
+            socket.off('room-dissolved')
             socket.off('error')
             socket.off('connect')
         }
@@ -584,6 +591,53 @@ export default function PokerRoom() {
         if (socket && targetPlayer) {
             socket.emit('kick-player', targetPlayer.socketId)
         }
+    }
+
+    const handleDissolveRoom = () => {
+        if (!socket || isDissolving) return
+
+        setIsDissolving(true)
+        socket.emit('dissolve-room', { roomId }, (ack) => {
+            setIsDissolving(false)
+            if (!ack?.ok) {
+                const message = (() => {
+                    switch (ack?.code) {
+                        case 'ROOM_NOT_FOUND':
+                            return 'Room no longer exists.'
+                        case 'NOT_HOST':
+                            return 'Only the host can dissolve the room.'
+                        case 'ALREADY_STARTED':
+                            return 'Game already started. You can only dissolve before the game begins.'
+                        default:
+                            return 'Failed to dissolve the room. Please try again.'
+                    }
+                })()
+                setError(message)
+                setTimeout(() => setError(null), 5000)
+            }
+        })
+    }
+
+    const handleDissolvedOk = () => {
+        setShowDissolvedModal(false)
+        setRoomState(null)
+        setMyPlayer(null)
+        setIsHost(false)
+        setHoleCards([])
+        setShowdownHands([])
+        setHandWinners([])
+        setTimerState(null)
+        setVisibleCommunityCards([])
+        setChatMessages([])
+        setActiveAnimations([])
+        setImpactMarks({})
+        setActiveChatBubbles([])
+        setShowChat(false)
+        setShowHeader(false)
+        setJoined(false)
+        setRoomNotFound(false)
+        setCheckingRoom(false)
+        navigate('/')
     }
 
     // Show loading while checking room
@@ -755,6 +809,9 @@ export default function PokerRoom() {
                         <HostControls
                             roomState={roomState}
                             socket={socket}
+                            onDissolveRoom={handleDissolveRoom}
+                            isDissolving={isDissolving}
+                            isHost={isHost}
                             onModalOpen={() => {
                                 if (window.innerWidth <= 768) setShowHeader(false);
                             }}
@@ -925,6 +982,27 @@ export default function PokerRoom() {
                     />
                 )
             })}
+
+            {showDissolvedModal && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <h2>Room Dissolved</h2>
+                        </div>
+                        <div style={{ padding: 'var(--space-xl)', textAlign: 'center' }}>
+                            <p style={{ fontSize: '1.1rem', marginBottom: 'var(--space-lg)', color: 'var(--color-text)' }}>
+                                Room has been dissolved.
+                            </p>
+                            <button
+                                className="btn btn-primary btn-lg"
+                                onClick={handleDissolvedOk}
+                            >
+                                OK
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

@@ -100,7 +100,17 @@ export default function Lobby() {
                     </div>
                     <div className="feature">
                         <span className="feature-icon">🐰</span>
-                        <span>Rabbit Hunt</span>
+                        <span className="feature-text">
+                            Rabbit Hunt
+                            <span 
+                                className="feature-info" 
+                                data-tooltip="Rabbit Hunt lets you peek at the undealt community cards once the hand ends."
+                                aria-label="What is Rabbit Hunt?"
+                                tabIndex={0}
+                            >
+                                ?
+                            </span>
+                        </span>
                     </div>
                     <div className="feature">
                         <span className="feature-icon">💬</span>

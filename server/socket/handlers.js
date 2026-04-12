@@ -1077,6 +1077,44 @@ export function setupSocketHandlers(io, socket) {
         });
     });
 
+    // Dissolve room (host only, before game starts)
+    socket.on('dissolve-room', ({ roomId }, ack) => {
+        const room = roomManager.getRoom(roomId);
+        if (!room) {
+            if (typeof ack === 'function') {
+                ack({ ok: false, code: 'ROOM_NOT_FOUND' });
+            }
+            return;
+        }
+
+        const player = room.getPlayer(socket.id);
+        const isHost =
+            player &&
+            (room.isHostSession(player.sessionToken) || room.isHostPlayer(player.playerId));
+
+        if (!isHost) {
+            if (typeof ack === 'function') {
+                ack({ ok: false, code: 'NOT_HOST' });
+            }
+            return;
+        }
+
+        if (room.game) {
+            if (typeof ack === 'function') {
+                ack({ ok: false, code: 'ALREADY_STARTED' });
+            }
+            return;
+        }
+
+        io.to(roomId).emit('room-dissolved');
+        io.in(roomId).socketsLeave(roomId);
+        roomManager.deleteRoom(roomId);
+
+        if (typeof ack === 'function') {
+            ack({ ok: true });
+        }
+    });
+
     // Disconnect
     socket.on('disconnect', () => {
         const room = roomManager.getRoomBySocketId(socket.id);
