@@ -24,23 +24,6 @@ class RoomManager {
     }
 
     deleteRoom(roomId) {
-        const room = this.rooms.get(roomId);
-        if (!room) {
-            return;
-        }
-
-        if (room.roomTimeoutId) {
-            clearTimeout(room.roomTimeoutId);
-            room.roomTimeoutId = null;
-        }
-
-        if (room.disconnectTimeouts && room.disconnectTimeouts.size > 0) {
-            for (const timeoutId of room.disconnectTimeouts.values()) {
-                clearTimeout(timeoutId);
-            }
-            room.disconnectTimeouts.clear();
-        }
-
         this.rooms.delete(roomId);
     }
 
